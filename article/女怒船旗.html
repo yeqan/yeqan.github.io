@@ -22,7 +22,9 @@
     var url = window.location.href;
     var params = new URLSearchParams(new URL(url).search);
     var key = params.get('key');
+    var text = document.getElementById('text').innerHTML
     var decText = CryptoJS.DES.decrypt(text, key).toString(CryptoJS.enc.Utf8)
+    console.log(decText)
     document.getElementById('text').innerHTML = decText
 
   </script>
