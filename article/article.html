@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <title>article</title>
+</head>
+
+<body>
+  <div id="contentContainer"></div>
+  <script src="../js/crypto-js.min.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get('path');
+    const key = params.get('key');
+    const targetUrl = name + ".html";
+    fetch(targetUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("无法加载文件");
+        }
+        return response.text();
+      })
+      .then(html => {
+        if(key !== null) {
+          html = CryptoJS.DES.decrypt(html, key).toString(CryptoJS.enc.Utf8)
+        }
+        document.getElementById("contentContainer").innerHTML = html;
+      })
+      .catch(error => {
+        console.error("加载失败：", error);
+      });
+  </script>
+</body>
+
+</html>
