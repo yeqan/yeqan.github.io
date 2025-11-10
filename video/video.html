@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <title>video</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <style>
+    /* 重置默认样式，避免边距影响 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    /* 视频容器：控制最大宽度，实现自适应核心 */
+    .videoContainer {
+      /* 最大宽度限制，避免电脑端视频过宽 */
+      max-width: 1200px;
+      /* 水平居中 */
+      margin: 0 auto;
+      /* 相对定位，用于配合视频绝对定位 */
+      position: relative;
+      /* 关键：通过padding-top固定视频比例（以16:9为例，计算方式：9/16*100% = 56.25%） */
+      /* 若需其他比例，可修改数值：4:3→75%，3:4→133.33% */
+      padding-top: 56.25%;
+    }
+
+    /* 视频元素：自适应容器，保持比例 */
+    #videoPlayer {
+      /* 绝对定位，填充容器 */
+      position: absolute;
+      top: 0;
+      left: 0;
+      /* 宽度和高度100%，填满容器 */
+      width: 100%;
+      height: 100%;
+      /* 圆角优化视觉，可选 */
+      border-radius: 8px;
+      /* 阴影增强层次感，可选 */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="videoContainer">
+    <video id="videoPlayer" preload="none" controls muted preload="metadata"></video>
+  </div>
+  <script src="../js/crypto-js.min.js"></script>
+  <script>
+
+    function wordArrayToUint8Array(wordArray) {
+      const length = wordArray.sigBytes;
+      const uint8Array = new Uint8Array(length);
+      let index = 0;
+      const words = wordArray.words;
+      for (let i = 0; i < length; i++) {
+        const wordIndex = index >>> 2;
+        const byteOffset = (index % 4) * 8;
+        uint8Array[i] = (words[wordIndex] >>> (24 - byteOffset)) & 0xff;
+        index++;
+      }
+      return uint8Array;
+    }
+
+    window.onload = async function () {
+      const params = new URLSearchParams(window.location.search);
+      const path = params.get('path');
+      const key = params.get('key');
+      const videoPlayer = document.getElementById('videoPlayer');
+      if (key == null) {
+        videoPlayer.src = path + ".mp4";
+      } else {
+        try {
+          const resp = await fetch(path + ".mp4.enc")
+          if (!resp.ok) throw new Error('无法加载视频文件');
+          const arrayBuffer = await resp.arrayBuffer();
+          console.log(arrayBuffer)
+          const ciphertext = CryptoJS.lib.WordArray.create(new Uint8Array(arrayBuffer));
+          console.log(ciphertext)
+          console.log(key)
+          const decrypted = CryptoJS.DES.decrypt(ciphertext, key);
+
+          const decryptedBytes = wordArrayToUint8Array(decrypted);
+          console.log(decryptedBytes)
+          const videoBlob = new Blob([decryptedBytes], { type: 'video/mp4' });
+          console.log(videoBlob)
+          // const videoUrl = URL.createObjectURL(videoBlob);
+
+          // videoPlayer.src = videoUrl;
+        } catch (error) {
+          console.error('播放失败：', error);
+        }
+        videoPlayer.load();
+      }
+    }
+
+  </script>
+</body>
+
+</html>

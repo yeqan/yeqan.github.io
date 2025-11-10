@@ -10,9 +10,9 @@
   <script src="../js/crypto-js.min.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
-    const name = params.get('path');
+    const path = params.get('path');
     const key = params.get('key');
-    const targetUrl = name + ".html";
+    const targetUrl = path + ".html";
     fetch(targetUrl)
       .then(response => {
         if (!response.ok) {
