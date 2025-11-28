@@ -55,51 +55,84 @@
   <script src="../js/crypto-js.min.js"></script>
   <script>
 
-    function wordArrayToUint8Array(wordArray) {
-      const length = wordArray.sigBytes;
-      const uint8Array = new Uint8Array(length);
-      let index = 0;
-      const words = wordArray.words;
-      for (let i = 0; i < length; i++) {
-        const wordIndex = index >>> 2;
-        const byteOffset = (index % 4) * 8;
-        uint8Array[i] = (words[wordIndex] >>> (24 - byteOffset)) & 0xff;
-        index++;
-      }
-      return uint8Array;
+    function reverseStr(str) {
+      // 处理 null/undefined/非字符串类型，避免报错
+      if (typeof str !== 'string' || str === '') return str;
+      return str.split('').reverse().join('');
     }
 
-    window.onload = async function () {
-      const params = new URLSearchParams(window.location.search);
-      const path = params.get('path');
-      const key = params.get('key');
-      const videoPlayer = document.getElementById('videoPlayer');
-      if (key == null) {
-        videoPlayer.src = path + ".mp4";
-      } else {
-        try {
-          const resp = await fetch(path + ".mp4.enc")
-          if (!resp.ok) throw new Error('无法加载视频文件');
-          const arrayBuffer = await resp.arrayBuffer();
-          console.log(arrayBuffer)
-          const ciphertext = CryptoJS.lib.WordArray.create(new Uint8Array(arrayBuffer));
-          console.log(ciphertext)
-          console.log(key)
-          const decrypted = CryptoJS.DES.decrypt(ciphertext, key);
+    const videoPlayer = document.getElementById('videoPlayer');
+    const params = new URLSearchParams(window.location.search);
+    const path = params.get('path');
+    const key = params.get('key');
 
-          const decryptedBytes = wordArrayToUint8Array(decrypted);
-          console.log(decryptedBytes)
-          const videoBlob = new Blob([decryptedBytes], { type: 'video/mp4' });
-          console.log(videoBlob)
-          // const videoUrl = URL.createObjectURL(videoBlob);
+    const DES_KEY = CryptoJS.enc.Utf8.parse(key); // 8字节密钥
+    const DES_IV = CryptoJS.enc.Utf8.parse(reverseStr(key));  // 8字节IV向量
+    const ENCRYPTED_VIDEO_PATH = path + ".mp4.enc"; // 加密视频文件路径
 
-          // videoPlayer.src = videoUrl;
-        } catch (error) {
-          console.error('播放失败：', error);
+    // 核心：DES-CBC解密函数（处理单块数据）
+    function decryptDesBlock(cipherText) {
+      const decrypted = CryptoJS.DES.decrypt(
+        { ciphertext: cipherText }, // 密文（WordArray格式）
+        DES_KEY,
+        {
+          iv: DES_IV,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7 // PKCS5与PKCS7补位兼容（Java PKCS5对应JS PKCS7）
         }
+      );
+      return decrypted.toString(CryptoJS.enc.Uint8Array); // 解密后转为Uint8Array
+    }
+
+    // 分块读取加密文件 + 解密 + 生成Blob播放流
+    async function decryptAndPlayVideo() {
+      console.log(key)
+      console.log(reverseStr(key))
+      try {
+        // 1. 读取加密视频文件
+        const response = await fetch(ENCRYPTED_VIDEO_PATH);
+        if (!response.ok) throw new Error('读取加密视频失败');
+
+        const reader = response.body.getReader();
+        const chunkSize = 8192;
+        const chunks = []; // 存储解密后的二进制块
+
+        // 2. 分块读取并解密
+        while (true) {
+          // 主动创建8KB缓冲区，强制每次只读8KB（和Java对齐）
+          const buffer = new Uint8Array(chunkSize);
+          const { done, value } = await reader.read(buffer);
+
+          if (done) break;
+
+          // 注意：value可能小于CHUNK_SIZE（最后一个分片可能不足8KB）
+          const actualChunk = value.subarray(0, value.byteLength); // 实际读取的分片
+          const cipherText = CryptoJS.lib.WordArray.create(actualChunk);
+          const decryptedChunk = decryptDesBlock(cipherText);
+
+          chunks.push(decryptedChunk);
+        }
+
+        // 3. 合并所有解密后的块，生成Blob（视频格式为mp4，需与原视频一致）
+        const mergedBuffer = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.length, 0));
+        let offset = 0;
+        for (const chunk of chunks) {
+          mergedBuffer.set(chunk, offset);
+          offset += chunk.length;
+        }
+        const videoBlob = new Blob([mergedBuffer], { type: 'video/mp4' });
+
+        // 4. 生成Blob URL，赋值给video标签播放
+        const videoUrl = URL.createObjectURL(videoBlob);
+        videoPlayer.src = videoUrl;
         videoPlayer.load();
+      } catch (error) {
+        console.error('解密或播放失败：', error);
       }
     }
+
+    // 页面加载完成后执行解密播放
+    window.onload = decryptAndPlayVideo;
 
   </script>
 </body>
