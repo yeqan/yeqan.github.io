@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown文章编辑器</title>
+    <script src="../js/crypto-js.min.js"></script>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome图标 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入Markdown解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <!-- 配置Tailwind自定义样式 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#6B7280',
+                        editor: '#F9FAFB',
+                        preview: '#FFFFFF',
+                        toolbar: '#F3F4F6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['Consolas', 'Monaco', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .editor-height {
+                height: calc(100vh - 120px);
+            }
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-slim::-webkit-scrollbar {
+                width: 4px;
+                height: 4px;
+            }
+            .scrollbar-slim::-webkit-scrollbar-thumb {
+                background-color: rgba(156, 163, 175, 0.5);
+                border-radius: 2px;
+            }
+            .scrollbar-slim::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .preview-hidden {
+                display: none !important;
+            }
+            .editor-full-width {
+                grid-column: 1 / -1 !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-800 antialiased">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa fa-file-text-o text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-gray-800">Markdown文章编辑器</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- 新增：预览区切换按钮 -->
+                <button id="togglePreviewBtn"
+                    class="flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                    <i class="fa fa-eye-slash"></i>
+                    <span class="hidden sm:inline">隐藏预览</span>
+                </button>
+                <button id="saveBtn"
+                    class="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+                    <i class="fa fa-save"></i>
+                    <span class="hidden sm:inline">保存为TXT</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- 工具栏 -->
+        <div class="bg-toolbar rounded-t-lg px-4 py-2 flex flex-wrap gap-2 mb-0 shadow-sm">
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="**粗体**">
+                <i class="fa fa-bold"></i> 粗体
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="*斜体*">
+                <i class="fa fa-italic"></i> 斜体
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="```代码块```">
+                <i class="fa fa-code"></i> 代码
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="# 标题1">
+                <i class="fa fa-header"></i> H1
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="## 标题2">
+                <i class="fa fa-header"></i> H2
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors"
+                data-tag="[链接文本](https://example.com)">
+                <i class="fa fa-link"></i> 链接
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors"
+                data-tag="![图片描述](https://example.com/image.jpg)">
+                <i class="fa fa-image"></i> 图片
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="- 列表项">
+                <i class="fa fa-list-ul"></i> 列表
+            </button>
+            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="> 引用文本">
+                <i class="fa fa-quote-right"></i> 引用
+            </button>
+        </div>
+
+        <!-- 编辑区和预览区 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="editorPreviewContainer">
+            <!-- 编辑区 -->
+            <div class="bg-editor rounded-b-lg lg:rounded-lg shadow-sm overflow-hidden" id="editorWrapper">
+                <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-600">编辑区</span>
+                    <span class="text-xs text-gray-500" id="wordCount">字数: 0</span>
+                </div>
+                <textarea id="editor"
+                    class="w-full editor-height p-4 font-mono text-sm bg-editor scrollbar-slim outline-none resize-none"
+                    placeholder="请输入Markdown文本..."></textarea>
+            </div>
+
+            <!-- 预览区 -->
+            <div class="bg-preview rounded-lg shadow-sm overflow-hidden" id="previewWrapper">
+                <div class="px-4 py-2 bg-gray-100 border-b border-gray-200">
+                    <span class="text-sm font-medium text-gray-600">预览区</span>
+                </div>
+                <div id="preview" class="editor-height p-4 overflow-y-auto scrollbar-slim prose max-w-none">
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <i class="fa fa-eye text-4xl mb-4"></i>
+                        <p>编辑Markdown文本即可实时预览效果</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 获取DOM元素
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const saveBtn = document.getElementById('saveBtn');
+        const wordCount = document.getElementById('wordCount');
+        const mdButtons = document.querySelectorAll('.md-btn');
+        // 新增：预览区相关元素
+        const togglePreviewBtn = document.getElementById('togglePreviewBtn');
+        const previewWrapper = document.getElementById('previewWrapper');
+        const editorWrapper = document.getElementById('editorWrapper');
+        const editorPreviewContainer = document.getElementById('editorPreviewContainer');
+
+        const params = new URLSearchParams(window.location.search);
+        const key = params.get('key');
+
+        // 预览区状态标识
+        let isPreviewVisible = true;
+
+        // Markdown解析配置
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            sanitize: false
+        });
+
+        // 实时预览
+        editor.addEventListener('input', function () {
+            // 更新预览区
+            preview.innerHTML = marked.parse(this.value || '<div class="flex flex-col items-center justify-center h-full text-gray-400"><i class="fa fa-eye text-4xl mb-4"></i><p>编辑Markdown文本即可实时预览效果</p></div>');
+
+            // 更新字数统计
+            wordCount.textContent = `字数: ${this.value.length}`;
+        });
+
+        // Markdown快捷按钮
+        mdButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const tag = this.getAttribute('data-tag');
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const selectedText = editor.value.substring(start, end);
+
+                // 插入Markdown标签
+                editor.value =
+                    editor.value.substring(0, start) +
+                    (selectedText ? tag.replace(/(.*)(\*\*|\*|```|#|\[|\]|\(|\)|!|\-|>)(.*)/, `$1$2${selectedText}$2$3`) : tag) +
+                    editor.value.substring(end);
+
+                // 聚焦编辑区并更新预览
+                editor.focus();
+                editor.dispatchEvent(new Event('input'));
+            });
+        });
+
+        // 保存为TXT文件
+        saveBtn.addEventListener('click', function () {
+            if (!editor.value.trim()) {
+                alert('请输入内容后再保存！');
+                return;
+            }
+
+            var editValue;
+            if (key !== null) {
+                editValue = CryptoJS.DES.encrypt(editor.value, key).toString();
+                // 测试解密
+                // console.log(CryptoJS.DES.decrypt(editValue, key).toString(CryptoJS.enc.Utf8)); 
+            } else {
+                editValue = editor.value
+            }
+
+            // 创建Blob对象
+            const blob = new Blob([editValue], { type: 'text/plain;charset=utf-8' });
+
+            // 创建下载链接
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `markdown_${new Date().getTime()}.txt`;
+
+            // 触发下载
+            document.body.appendChild(a);
+            a.click();
+
+            // 清理
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+
+            // 提示保存成功
+            this.innerHTML = '<i class="fa fa-check"></i> 保存成功';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fa fa-save"></i> <span class="hidden sm:inline">保存为TXT</span>';
+            }, 2000);
+        });
+
+        // 新增：预览区显示/隐藏切换逻辑
+        togglePreviewBtn.addEventListener('click', function () {
+            isPreviewVisible = !isPreviewVisible;
+
+            if (isPreviewVisible) {
+                // 显示预览区
+                previewWrapper.classList.remove('preview-hidden');
+                editorWrapper.classList.remove('editor-full-width');
+                // 恢复按钮文本和图标
+                this.innerHTML = '<i class="fa fa-eye-slash"></i> <span class="hidden sm:inline">隐藏预览</span>';
+                // 恢复布局
+                editorPreviewContainer.classList.remove('grid-cols-1');
+                editorPreviewContainer.classList.add('lg:grid-cols-2');
+                // 重置编辑区圆角（适配双栏）
+                editorWrapper.classList.remove('lg:rounded-lg');
+                editorWrapper.classList.add('rounded-b-lg');
+            } else {
+                // 隐藏预览区
+                previewWrapper.classList.add('preview-hidden');
+                editorWrapper.classList.add('editor-full-width');
+                // 修改按钮文本和图标
+                this.innerHTML = '<i class="fa fa-eye"></i> <span class="hidden sm:inline">显示预览</span>';
+                // 调整布局为单栏
+                editorPreviewContainer.classList.add('grid-cols-1');
+                editorPreviewContainer.classList.remove('lg:grid-cols-2');
+                // 调整编辑区圆角（适配单栏）
+                editorWrapper.classList.remove('rounded-b-lg');
+                editorWrapper.classList.add('lg:rounded-lg');
+            }
+
+            // 触发编辑区input事件，确保布局更新后预览内容正常
+            editor.dispatchEvent(new Event('input'));
+        });
+    </script>
+</body>
+
+</html>
