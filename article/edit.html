@@ -70,7 +70,7 @@
                 <h1 class="text-xl font-bold text-gray-800">Markdown文章编辑器</h1>
             </div>
             <div class="flex items-center gap-3">
-                <!-- 新增：预览区切换按钮 -->
+                <!-- 预览区切换按钮 -->
                 <button id="togglePreviewBtn"
                     class="flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
                     <i class="fa fa-eye-slash"></i>
@@ -78,8 +78,7 @@
                 </button>
                 <button id="saveBtn"
                     class="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
-                    <i class="fa fa-save"></i>
-                    <span class="hidden sm:inline">保存为TXT</span>
+                    <span class="hidden sm:inline">保存</span>
                 </button>
             </div>
         </div>
@@ -155,14 +154,16 @@
         const saveBtn = document.getElementById('saveBtn');
         const wordCount = document.getElementById('wordCount');
         const mdButtons = document.querySelectorAll('.md-btn');
-        // 新增：预览区相关元素
+        // 预览区相关元素
         const togglePreviewBtn = document.getElementById('togglePreviewBtn');
         const previewWrapper = document.getElementById('previewWrapper');
         const editorWrapper = document.getElementById('editorWrapper');
         const editorPreviewContainer = document.getElementById('editorPreviewContainer');
 
         const params = new URLSearchParams(window.location.search);
-        const key = params.get('key');
+        const deckey = params.get('deckey');
+        const enckey = params.get('enckey');
+        const path = params.get('path');
 
         // 预览区状态标识
         let isPreviewVisible = true;
@@ -211,10 +212,10 @@
             }
 
             var editValue;
-            if (key !== null) {
-                editValue = CryptoJS.DES.encrypt(editor.value, key).toString();
+            if (enckey !== null) {
+                editValue = CryptoJS.DES.encrypt(editor.value, enckey).toString();
                 // 测试解密
-                // console.log(CryptoJS.DES.decrypt(editValue, key).toString(CryptoJS.enc.Utf8)); 
+                // console.log(CryptoJS.DES.decrypt(editValue, enckey).toString(CryptoJS.enc.Utf8)); 
             } else {
                 editValue = editor.value
             }
@@ -274,6 +275,38 @@
 
             // 触发编辑区input事件，确保布局更新后预览内容正常
             editor.dispatchEvent(new Event('input'));
+        });
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', function () {
+
+            if (path !== null) {
+                const targetUrl = path + ".html";
+                fetch(targetUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("无法加载文件");
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        if (deckey !== null) {
+                            html = CryptoJS.DES.decrypt(html, deckey).toString(CryptoJS.enc.Utf8)
+                        }
+                        // const parser = new DOMParser();
+                        // const doc = parser.parseFromString(html, 'text/html');
+                        // const write = doc.getElementById("write");
+                        // console.log(write.innerHTML)
+                        // editor.value = write.innerHTML;
+                        // editor.dispatchEvent(new Event('input'));
+                        editor.value = html;
+                        editor.dispatchEvent(new Event('input'));
+
+                    })
+                    .catch(error => {
+                        console.error("加载失败：", error);
+                    });
+            }
         });
     </script>
 </body>
