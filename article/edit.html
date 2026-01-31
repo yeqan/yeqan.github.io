@@ -60,6 +60,11 @@
                     <span class="hidden sm:inline">保存</span>
                     <i class="fa fa-save"></i>
                 </button>
+                <button id="copyBtn"
+                    class="flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    <span class="hidden sm:inline">复制</span>
+                    <i class="fa fa-copy"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -82,6 +87,7 @@
         // 获取DOM元素
         const editor = document.getElementById('editor');
         const saveBtn = document.getElementById('saveBtn');
+        const copyBtn = document.getElementById('copyBtn');
         const wordCount = document.getElementById('wordCount');
         
         // 获取URL参数
@@ -120,6 +126,45 @@
             URL.revokeObjectURL(a.href);
 
             alert('保存成功！');
+        });
+
+        // 复制文本
+        copyBtn.addEventListener('click', async function () {
+            // 检查编辑区是否有内容
+            if (!editor.value.trim()) {
+                alert('请输入内容后再复制！');
+                return;
+            }
+
+            // 根据enckey判断是否加密后再复制
+            const copyContent = enckey 
+                ? CryptoJS.DES.encrypt(editor.value, enckey).toString()  // 加密后复制
+                : editor.value;  // 复制原始内容
+
+            try {
+                // 将内容复制到剪贴板
+                await navigator.clipboard.writeText(copyContent);
+                // 提示区分加密/未加密复制
+                alert('复制成功！');
+            } catch (error) {
+                // 兼容备用方案（如果剪贴板API失败）
+                console.error('剪贴板复制失败:', error);
+                // 手动创建textarea复制
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = copyContent;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+                
+                // 再次检查是否复制成功并提示
+                const isSuccess = document.execCommand('copy');
+                if (isSuccess) {
+                    alert('复制成功！');
+                } else {
+                    alert('复制失败，请手动复制内容');
+                }
+            }
         });
 
         // 初始化加载文件
