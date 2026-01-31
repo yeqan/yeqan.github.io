@@ -204,10 +204,7 @@
             URL.revokeObjectURL(a.href);
 
             // 提示保存成功
-            this.innerHTML = '<i class="fa fa-check"></i> 保存成功';
-            setTimeout(() => {
-                this.innerHTML = '<i class="fa fa-save"></i> <span class="hidden sm:inline">保存为TXT</span>';
-            }, 2000);
+            alert('保存成功！');
         });
 
         // 新增：预览区显示/隐藏切换逻辑
