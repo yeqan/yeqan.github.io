@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +9,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入Font Awesome图标 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- 引入Markdown解析库 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
     <!-- 配置Tailwind自定义样式 -->
     <script>
         tailwind.config = {
@@ -19,10 +16,7 @@
                 extend: {
                     colors: {
                         primary: '#165DFF',
-                        secondary: '#6B7280',
                         editor: '#F9FAFB',
-                        preview: '#FFFFFF',
-                        toolbar: '#F3F4F6',
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -35,10 +29,8 @@
     <style type="text/tailwindcss">
         @layer utilities {
             .editor-height {
-                height: calc(100vh - 120px);
-            }
-            .content-auto {
-                content-visibility: auto;
+                height: calc(100vh - 140px);
+                min-height: 400px;
             }
             .scrollbar-slim::-webkit-scrollbar {
                 width: 4px;
@@ -51,16 +43,9 @@
             .scrollbar-slim::-webkit-scrollbar-track {
                 background: transparent;
             }
-            .preview-hidden {
-                display: none !important;
-            }
-            .editor-full-width {
-                grid-column: 1 / -1 !important;
-            }
         }
     </style>
 </head>
-
 <body class="bg-gray-50 font-sans text-gray-800 antialiased">
     <!-- 顶部导航栏 -->
     <header class="bg-white shadow-sm sticky top-0 z-10">
@@ -73,6 +58,7 @@
                 <button id="saveBtn"
                     class="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
                     <span class="hidden sm:inline">保存</span>
+                    <i class="fa fa-save"></i>
                 </button>
             </div>
         </div>
@@ -80,44 +66,34 @@
 
     <!-- 主内容区 -->
     <main class="container mx-auto px-4 py-6">
-        <!-- 编辑区和预览区 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="editorContainer">
-            <!-- 编辑区 -->
-            <div class="bg-editor rounded-b-lg lg:rounded-lg shadow-sm overflow-hidden" id="editorWrapper">
-                <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
-                    <span class="text-sm font-medium text-gray-600">编辑区</span>
-                    <span class="text-xs text-gray-500" id="wordCount">字数: 0</span>
-                </div>
-                <textarea id="editor"
-                    class="w-full editor-height p-4 font-mono text-sm bg-editor scrollbar-slim outline-none resize-none"
-                    placeholder="请输入Markdown文本..."></textarea>
+        <!-- 编辑区 -->
+        <div class="bg-editor rounded-lg shadow-sm overflow-hidden">
+            <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-600">编辑区</span>
+                <span class="text-xs text-gray-500" id="wordCount">字数: 0</span>
             </div>
+            <textarea id="editor"
+                class="w-full editor-height p-4 font-mono text-sm bg-editor scrollbar-slim outline-none resize-none"
+                placeholder="请输入Markdown文本..."></textarea>
         </div>
     </main>
 
     <script>
-
         // 获取DOM元素
         const editor = document.getElementById('editor');
         const saveBtn = document.getElementById('saveBtn');
         const wordCount = document.getElementById('wordCount');
-        const mdButtons = document.querySelectorAll('.md-btn');
-
-        // 编辑区相关元素
-        const editorWrapper = document.getElementById('editorWrapper');
-        const editorContainer = document.getElementById('editorContainer');
-
-        // 其他元素
+        
+        // 获取URL参数
         const params = new URLSearchParams(window.location.search);
         const deckey = params.get('deckey');
         const enckey = params.get('enckey');
         const path = params.get('path');
 
-        // Markdown解析配置
-        marked.setOptions({
-            breaks: true,
-            gfm: true,
-            sanitize: false
+        // 字数统计
+        editor.addEventListener('input', function() {
+            const count = this.value.trim().length;
+            wordCount.textContent = `字数: ${count}`;
         });
 
         // 保存文件
@@ -127,61 +103,44 @@
                 return;
             }
 
-            var editValue;
-            if (enckey !== null) {
-                editValue = CryptoJS.DES.encrypt(editor.value, enckey).toString();
-                // 测试解密
-                // console.log(CryptoJS.DES.decrypt(editValue, enckey).toString(CryptoJS.enc.Utf8)); 
-            } else {
-                editValue = editor.value
-            }
+            // 加密处理
+            const editValue = enckey 
+                ? CryptoJS.DES.encrypt(editor.value, enckey).toString()
+                : editor.value;
 
-            // 创建Blob对象
+            // 创建并下载文件
             const blob = new Blob([editValue], { type: 'text/plain;charset=utf-8' });
-
-            // 创建下载链接
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = `markdown_${new Date().getTime()}.txt`;
-
-            // 触发下载
+            
             document.body.appendChild(a);
             a.click();
-
-            // 清理
             document.body.removeChild(a);
             URL.revokeObjectURL(a.href);
 
-            // 提示保存成功
             alert('保存成功！');
         });
 
-        // 初始化
+        // 初始化加载文件
         window.addEventListener('DOMContentLoaded', function () {
-
-            if (path !== null) {
-                const targetUrl = path + ".html";
-                fetch(targetUrl)
+            if (path) {
+                fetch(`${path}.html`)
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error("无法加载文件");
-                        }
+                        if (!response.ok) throw new Error("无法加载文件");
                         return response.text();
                     })
                     .then(html => {
-                        if (deckey !== null) {
-                            html = CryptoJS.DES.decrypt(html, deckey).toString(CryptoJS.enc.Utf8)
-                        }
-                        editor.value = html;
+                        // 解密处理
+                        editor.value = deckey 
+                            ? CryptoJS.DES.decrypt(html, deckey).toString(CryptoJS.enc.Utf8)
+                            : html;
+                        // 触发字数统计更新
                         editor.dispatchEvent(new Event('input'));
-
                     })
-                    .catch(error => {
-                        console.error("加载失败：", error);
-                    });
+                    .catch(error => console.error("加载失败：", error));
             }
         });
     </script>
 </body>
-
 </html>
