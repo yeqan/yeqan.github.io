@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown文章编辑器</title>
+    <title>EDIT</title>
     <script src="../js/crypto-js.min.js"></script>
     <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -67,7 +67,7 @@
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="fa fa-file-text-o text-primary text-2xl"></i>
-                <h1 class="text-xl font-bold text-gray-800">Markdown文章编辑器</h1>
+                <h1 class="text-xl font-bold text-gray-800">EDIT</h1>
             </div>
             <div class="flex items-center gap-3">
                 <!-- 预览区切换按钮 -->
@@ -86,39 +86,6 @@
 
     <!-- 主内容区 -->
     <main class="container mx-auto px-4 py-6">
-        <!-- 工具栏 -->
-        <div class="bg-toolbar rounded-t-lg px-4 py-2 flex flex-wrap gap-2 mb-0 shadow-sm">
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="**粗体**">
-                <i class="fa fa-bold"></i> 粗体
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="*斜体*">
-                <i class="fa fa-italic"></i> 斜体
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="```代码块```">
-                <i class="fa fa-code"></i> 代码
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="# 标题1">
-                <i class="fa fa-header"></i> H1
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="## 标题2">
-                <i class="fa fa-header"></i> H2
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors"
-                data-tag="[链接文本](https://example.com)">
-                <i class="fa fa-link"></i> 链接
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors"
-                data-tag="![图片描述](https://example.com/image.jpg)">
-                <i class="fa fa-image"></i> 图片
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="- 列表项">
-                <i class="fa fa-list-ul"></i> 列表
-            </button>
-            <button class="md-btn px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors" data-tag="> 引用文本">
-                <i class="fa fa-quote-right"></i> 引用
-            </button>
-        </div>
-
         <!-- 编辑区和预览区 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="editorPreviewContainer">
             <!-- 编辑区 -->
@@ -293,12 +260,6 @@
                         if (deckey !== null) {
                             html = CryptoJS.DES.decrypt(html, deckey).toString(CryptoJS.enc.Utf8)
                         }
-                        // const parser = new DOMParser();
-                        // const doc = parser.parseFromString(html, 'text/html');
-                        // const write = doc.getElementById("write");
-                        // console.log(write.innerHTML)
-                        // editor.value = write.innerHTML;
-                        // editor.dispatchEvent(new Event('input'));
                         editor.value = html;
                         editor.dispatchEvent(new Event('input'));
 
