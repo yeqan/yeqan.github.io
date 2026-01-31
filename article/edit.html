@@ -75,7 +75,7 @@
         <div class="bg-editor rounded-lg shadow-sm overflow-hidden">
             <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
                 <span class="text-sm font-medium text-gray-600">编辑区</span>
-                <span class="text-xs text-gray-500" id="wordCount">字数: 0</span>
+                <span class="text-xs text-gray-500" id="countDisplay">字数：0 | 选中：0</span>
             </div>
             <textarea id="editor"
                 class="w-full editor-height p-4 font-mono text-sm bg-editor scrollbar-slim outline-none resize-none"
@@ -88,7 +88,7 @@
         const editor = document.getElementById('editor');
         const saveBtn = document.getElementById('saveBtn');
         const copyBtn = document.getElementById('copyBtn');
-        const wordCount = document.getElementById('wordCount');
+        const countDisplay = document.getElementById('countDisplay');
         
         // 获取URL参数
         const params = new URLSearchParams(window.location.search);
@@ -96,11 +96,52 @@
         const enckey = params.get('enckey');
         const path = params.get('path');
 
+        // 存储总字数和选中字数的状态
+        let totalWordCount = 0;
+        let selectedWordCount = 0;
+
+        function renderCountDisplay() {
+            countDisplay.textContent = `字数：${totalWordCount} | 选中：${selectedWordCount}`;
+        }
+
+        // 选中字数统计函数
+        function updateSelectedWordCount() {
+            // 仅在编辑区有焦点时统计选中字数
+            if (document.activeElement !== editor) {
+                selectedWordCount = 0;
+                renderCountDisplay();
+                return;
+            }
+            // 获取选中文本并去除首尾空白符
+            const selection = window.getSelection();
+            const selectedText = selection.toString().trim();
+            // 更新选中字数状态
+            selectedWordCount = selectedText.length;
+            // 重新渲染显示
+            renderCountDisplay();
+        }
+
         // 字数统计
         editor.addEventListener('input', function() {
-            const count = this.value.trim().length;
-            wordCount.textContent = `字数: ${count}`;
+            // 更新总字数状态
+            totalWordCount = this.value.trim().length;
+            // 输入时重置选中字数（输入会取消选中状态）
+            selectedWordCount = 0;
+            // 更新显示
+            renderCountDisplay();
         });
+
+        // 鼠标松开时（鼠标选择文本结束）
+        editor.addEventListener('mouseup', updateSelectedWordCount);
+        // 键盘操作时（如shift+箭头选择、ctrl+a全选）
+        editor.addEventListener('keyup', function(e) {
+            // 监听方向键、shift、ctrl/meta（mac）键操作
+            if (['Shift', 'Control', 'Meta', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a'].includes(e.key)) {
+                updateSelectedWordCount();
+            }
+        });
+        // 全局选区变化监听（兼容更多选择场景）
+        document.addEventListener('selectionchange', updateSelectedWordCount);
 
         // 保存文件
         saveBtn.addEventListener('click', function () {
@@ -180,11 +221,14 @@
                         editor.value = deckey 
                             ? CryptoJS.DES.decrypt(html, deckey).toString(CryptoJS.enc.Utf8)
                             : html;
-                        // 触发字数统计更新
-                        editor.dispatchEvent(new Event('input'));
+                        // 更新总字数状态
+                        totalWordCount = editor.value.trim().length;
+                        // 初始化显示
+                        renderCountDisplay();
                     })
                     .catch(error => console.error("加载失败：", error));
             }
+            updateSelectedWordCount();
         });
     </script>
 </body>
