@@ -17,6 +17,15 @@
                     colors: {
                         primary: '#165DFF',
                         editor: '#F9FAFB',
+                        // 夜间模式颜色
+                        dark: {
+                            bg: '#1E1E2E',
+                            card: '#2D2D3F',
+                            text: '#E2E8F0',
+                            border: '#404059',
+                            editor: '#282838',
+                            hover: '#383850'
+                        }
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -43,25 +52,34 @@
             .scrollbar-slim::-webkit-scrollbar-track {
                 background: transparent;
             }
+            /* 夜间模式滚动条 */
+            .dark .scrollbar-slim::-webkit-scrollbar-thumb {
+                background-color: rgba(100, 116, 139, 0.5);
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800 antialiased">
+<body class="bg-gray-50 font-sans text-gray-800 antialiased transition-colors duration-300" id="appBody">
     <!-- 顶部导航栏 -->
-    <header class="bg-white shadow-sm sticky top-0 z-10">
+    <header class="bg-white shadow-sm sticky top-0 z-10 transition-colors duration-300" id="header">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <i class="fa fa-file-text-o text-primary text-2xl"></i>
-                <h1 class="text-xl font-bold text-gray-800">EDIT</h1>
+                <h1 class="text-xl font-bold text-gray-800 transition-colors duration-300" id="headerTitle">EDIT</h1>
             </div>
             <div class="flex items-center gap-3">
+                <!-- 新增夜间模式切换按钮 -->
+                <button id="themeToggleBtn"
+                    class="flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    <span class="hidden sm:inline" id="themeText">夜间模式</span>
+                    <i class="fa fa-moon-o" id="themeIcon"></i>
+                </button>
                 <button id="saveBtn"
                     class="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
                     <span class="hidden sm:inline">保存</span>
                     <i class="fa fa-save"></i>
                 </button>
                 <button id="copyBtn"
-                    class="flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    class="flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors" id="copyBtnEl">
                     <span class="hidden sm:inline">复制</span>
                     <i class="fa fa-copy"></i>
                 </button>
@@ -70,16 +88,15 @@
     </header>
 
     <!-- 主内容区 -->
-    <main class="container mx-auto px-4 py-6">
+    <main class="container mx-auto px-4 py-6 transition-colors duration-300" id="mainContent">
         <!-- 编辑区 -->
-        <div class="bg-editor rounded-lg shadow-sm overflow-hidden">
-            <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
-                <span class="text-sm font-medium text-gray-600">编辑区</span>
-                <span class="text-xs text-gray-500" id="countDisplay">字数：0 | 选中：0</span>
+        <div class="bg-editor rounded-lg shadow-sm overflow-hidden transition-colors duration-300" id="editorContainer">
+            <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center transition-colors duration-300" id="editorHeader">
+                <span class="text-sm font-medium text-gray-600 transition-colors duration-300" id="editorLabel">编辑区</span>
+                <span class="text-xs text-gray-500 transition-colors duration-300" id="countDisplay">字数：0 | 选中：0</span>
             </div>
             <textarea id="editor"
-                class="w-full editor-height p-4 font-mono text-sm bg-editor scrollbar-slim outline-none resize-none"
-                placeholder="请输入Markdown文本..."></textarea>
+                class="w-full editor-height p-4 font-mono text-sm bg-editor scrollbar-slim outline-none resize-none transition-colors duration-300"></textarea>
         </div>
     </main>
 
@@ -89,13 +106,24 @@
         const saveBtn = document.getElementById('saveBtn');
         const copyBtn = document.getElementById('copyBtn');
         const countDisplay = document.getElementById('countDisplay');
+        // 新增夜间模式相关DOM元素
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const appBody = document.getElementById('appBody');
+        const header = document.getElementById('header');
+        const headerTitle = document.getElementById('headerTitle');
+        const mainContent = document.getElementById('mainContent');
+        const editorContainer = document.getElementById('editorContainer');
+        const editorHeader = document.getElementById('editorHeader');
+        const editorLabel = document.getElementById('editorLabel');
+        const themeText = document.getElementById('themeText');
+        const themeIcon = document.getElementById('themeIcon');
+        const copyBtnEl = document.getElementById('copyBtnEl');
         
         // 获取URL参数
         const params = new URLSearchParams(window.location.search);
         const deckey = params.get('deckey');
         const enckey = params.get('enckey');
         const path = params.get('path');
-
         const font = params.get('font');
 
         // 动态设置编辑区字体
@@ -113,6 +141,8 @@
         // 存储总字数和选中字数的状态
         let totalWordCount = 0;
         let selectedWordCount = 0;
+        // 新增：存储夜间模式状态
+        let isDarkMode = false;
 
         function renderCountDisplay() {
             countDisplay.textContent = `字数：${totalWordCount} | 选中：${selectedWordCount}`;
@@ -243,6 +273,87 @@
                     .catch(error => console.error("加载失败：", error));
             }
             updateSelectedWordCount();
+            
+            // 新增：检查本地存储的主题偏好
+            const savedTheme = localStorage.getItem('editorTheme');
+            if (savedTheme === 'dark') {
+                toggleDarkMode(true);
+            }
+        });
+
+        // 新增：切换夜间模式函数
+        function toggleDarkMode(forceDark = null) {
+            // 确定当前模式
+            isDarkMode = forceDark !== null ? forceDark : !isDarkMode;
+            
+            // 更新DOM样式
+            if (isDarkMode) {
+                // 夜间模式样式
+                appBody.classList.remove('bg-gray-50', 'text-gray-800');
+                appBody.classList.add('bg-dark-bg', 'text-dark-text');
+                header.classList.remove('bg-white', 'shadow-sm');
+                header.classList.add('bg-dark-card', 'shadow-none', 'border-b', 'border-dark-border');
+                headerTitle.classList.remove('text-gray-800');
+                headerTitle.classList.add('text-dark-text');
+                mainContent.classList.remove('text-gray-800');
+                mainContent.classList.add('text-dark-text');
+                editorContainer.classList.remove('bg-editor', 'shadow-sm');
+                editorContainer.classList.add('bg-dark-card', 'shadow-none');
+                editorHeader.classList.remove('bg-gray-100', 'border-gray-200');
+                editorHeader.classList.add('bg-dark-bg', 'border-dark-border');
+                editorLabel.classList.remove('text-gray-600');
+                editorLabel.classList.add('text-dark-text');
+                countDisplay.classList.remove('text-gray-500');
+                countDisplay.classList.add('text-dark-text/80');
+                editor.classList.remove('bg-editor', 'text-sm');
+                editor.classList.add('bg-dark-editor', 'text-dark-text', 'placeholder:text-dark-text/50');
+                copyBtnEl.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                copyBtnEl.classList.add('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
+                themeToggleBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                themeToggleBtn.classList.add('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
+                
+                // 更新按钮文本和图标
+                themeText.textContent = '日间模式';
+                themeIcon.classList.remove('fa-moon-o');
+                themeIcon.classList.add('fa-sun-o');
+            } else {
+                // 日间模式样式（恢复默认）
+                appBody.classList.add('bg-gray-50', 'text-gray-800');
+                appBody.classList.remove('bg-dark-bg', 'text-dark-text');
+                header.classList.add('bg-white', 'shadow-sm');
+                header.classList.remove('bg-dark-card', 'shadow-none', 'border-b', 'border-dark-border');
+                headerTitle.classList.add('text-gray-800');
+                headerTitle.classList.remove('text-dark-text');
+                mainContent.classList.add('text-gray-800');
+                mainContent.classList.remove('text-dark-text');
+                editorContainer.classList.add('bg-editor', 'shadow-sm');
+                editorContainer.classList.remove('bg-dark-card', 'shadow-none');
+                editorHeader.classList.add('bg-gray-100', 'border-gray-200');
+                editorHeader.classList.remove('bg-dark-bg', 'border-dark-border');
+                editorLabel.classList.add('text-gray-600');
+                editorLabel.classList.remove('text-dark-text');
+                countDisplay.classList.add('text-gray-500');
+                countDisplay.classList.remove('text-dark-text/80');
+                editor.classList.add('bg-editor', 'text-sm');
+                editor.classList.remove('bg-dark-editor', 'text-dark-text', 'placeholder:text-dark-text/50');
+                copyBtnEl.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                copyBtnEl.classList.remove('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
+                themeToggleBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                themeToggleBtn.classList.remove('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
+                
+                // 更新按钮文本和图标
+                themeText.textContent = '夜间模式';
+                themeIcon.classList.add('fa-moon-o');
+                themeIcon.classList.remove('fa-sun-o');
+            }
+            
+            // 保存主题偏好到本地存储
+            localStorage.setItem('editorTheme', isDarkMode ? 'dark' : 'light');
+        }
+
+        // 新增：绑定主题切换按钮事件
+        themeToggleBtn.addEventListener('click', function() {
+            toggleDarkMode();
         });
     </script>
 </body>
