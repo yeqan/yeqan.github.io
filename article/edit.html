@@ -96,6 +96,20 @@
         const enckey = params.get('enckey');
         const path = params.get('path');
 
+        const font = params.get('font');
+
+        // 动态设置编辑区字体
+        if (font) {
+            // 兼容字体名称格式，保留原有降级字体
+            const fontFamilies = [
+                decodeURIComponent(font), // 解码URL中的字体名称（处理空格转义）
+                'Consolas', 
+                'Monaco', 
+                'monospace'
+            ].join(', ');
+            editor.style.fontFamily = fontFamilies;
+        }
+
         // 存储总字数和选中字数的状态
         let totalWordCount = 0;
         let selectedWordCount = 0;
