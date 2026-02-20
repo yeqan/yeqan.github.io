@@ -67,7 +67,7 @@
                 <h1 class="text-xl font-bold text-gray-800 transition-colors duration-300" id="headerTitle">EDIT</h1>
             </div>
             <div class="flex items-center gap-3">
-                <!-- 新增夜间模式切换按钮 -->
+                <!-- 夜间模式切换按钮 -->
                 <button id="themeToggleBtn"
                     class="flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
                     <span class="hidden sm:inline" id="themeText">夜间模式</span>
@@ -106,7 +106,7 @@
         const saveBtn = document.getElementById('saveBtn');
         const copyBtn = document.getElementById('copyBtn');
         const countDisplay = document.getElementById('countDisplay');
-        // 新增夜间模式相关DOM元素
+        // 夜间模式相关DOM元素
         const themeToggleBtn = document.getElementById('themeToggleBtn');
         const appBody = document.getElementById('appBody');
         const header = document.getElementById('header');
@@ -141,11 +141,25 @@
         // 存储总字数和选中字数的状态
         let totalWordCount = 0;
         let selectedWordCount = 0;
-        // 新增：存储夜间模式状态
+        // 存储夜间模式状态
         let isDarkMode = false;
 
+        let lastCountText = ''; // 缓存上次的显示文本
         function renderCountDisplay() {
-            countDisplay.textContent = `字数：${totalWordCount} | 选中：${selectedWordCount}`;
+            const newText = `字数：${totalWordCount} | 选中：${selectedWordCount}`;
+            if (newText !== lastCountText) { // 仅数值变化时更新DOM
+                countDisplay.textContent = newText;
+                lastCountText = newText;
+            }
+        }
+
+        // 防抖函数
+        function debounce(fn, delay = 100) {
+            let timer = null;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
         }
 
         // 选中字数统计函数
@@ -165,27 +179,29 @@
             renderCountDisplay();
         }
 
-        // 字数统计
-        editor.addEventListener('input', function() {
+        // 字数统计（防抖100ms，避开拼音输入的高频触发）
+        const debouncedInputHandler = debounce(function() {
             // 更新总字数状态
-            totalWordCount = this.value.trim().length;
+            totalWordCount = this.value.length;
             // 输入时重置选中字数（输入会取消选中状态）
             selectedWordCount = 0;
             // 更新显示
             renderCountDisplay();
-        });
+        }, 100);
+        editor.addEventListener('input', debouncedInputHandler);
 
+        const debouncedSelectionUpdate = debounce(updateSelectedWordCount, 50);
         // 鼠标松开时（鼠标选择文本结束）
-        editor.addEventListener('mouseup', updateSelectedWordCount);
+        editor.addEventListener('mouseup', debouncedSelectionUpdate);
         // 键盘操作时（如shift+箭头选择、ctrl+a全选）
         editor.addEventListener('keyup', function(e) {
             // 监听方向键、shift、ctrl/meta（mac）键操作
             if (['Shift', 'Control', 'Meta', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a'].includes(e.key)) {
-                updateSelectedWordCount();
+                debouncedSelectionUpdate();
             }
         });
         // 全局选区变化监听（兼容更多选择场景）
-        document.addEventListener('selectionchange', updateSelectedWordCount);
+        document.addEventListener('selectionchange', debouncedSelectionUpdate);
 
         // 保存文件
         saveBtn.addEventListener('click', function () {
@@ -274,14 +290,14 @@
             }
             updateSelectedWordCount();
             
-            // 新增：检查本地存储的主题偏好
+            // 检查本地存储的主题偏好
             const savedTheme = localStorage.getItem('editorTheme');
             if (savedTheme === 'dark') {
                 toggleDarkMode(true);
             }
         });
 
-        // 新增：切换夜间模式函数
+        // 切换夜间模式函数
         function toggleDarkMode(forceDark = null) {
             // 确定当前模式
             isDarkMode = forceDark !== null ? forceDark : !isDarkMode;
@@ -351,7 +367,7 @@
             localStorage.setItem('editorTheme', isDarkMode ? 'dark' : 'light');
         }
 
-        // 新增：绑定主题切换按钮事件
+        // 绑定主题切换按钮事件
         themeToggleBtn.addEventListener('click', function() {
             toggleDarkMode();
         });
