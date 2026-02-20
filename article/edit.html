@@ -219,7 +219,11 @@
             const blob = new Blob([editValue], { type: 'text/plain;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `markdown_${new Date().getTime()}.txt`;
+            if(path != null) {
+                a.download = `${path}.txt`;
+            } else {
+                a.download = `text_${new Date().getTime()}.txt`;
+            }
             
             document.body.appendChild(a);
             a.click();
