@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WPS Document Editor</title>
+    <!-- 引入 Tailwind CSS 框架（CDN） -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Font Awesome 图标库（CDN） -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        /* ===== 全局重置 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* ===== 基础布局样式 ===== */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 主布局容器：弹性布局，撑满整个视口高度 */
+        .wps-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 主内容区：占据剩余空间，纵向排列 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ===== 顶部工具栏样式 ===== */
+        .top-bar {
+            height: 48px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+
+        /* 文档标题样式 */
+        .doc-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 文档保存状态提示 */
+        .doc-status {
+            font-size: 12px;
+            color: #999;
+            margin-left: 8px;
+        }
+
+        /* 顶部按钮容器 */
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 通用按钮样式 */
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
+            color: #666;
+            background-color: #f5f5f5;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #e8e8e8;
+        }
+
+        /* 主要按钮（下载按钮） */
+        .action-btn.primary {
+            background-color: #165DFF;
+            color: #ffffff;
+        }
+
+        .action-btn.primary:hover {
+            background-color: #0d47a1;
+        }
+
+        /* ===== 编辑区样式 ===== */
+        /* 灰色背景的编辑区域容器 */
+        .editor-area {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #e8e8e8;
+            padding: 24px 0;
+        }
+
+        /* A4 纸张样式：居中显示，模拟真实文档效果 */
+        .document-paper {
+            width: 794px;          /* A4 宽度（96dpi） */
+            min-height: 1122px;    /* A4 高度（96dpi） */
+            background-color: #ffffff;
+            margin: 0 auto;
+            padding: 60px 48px;    /* 模拟页边距 */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
+            outline: none;
+            position: relative;
+        }
+
+        .document-paper:focus {
+            outline: none;
+        }
+
+        /* 页头样式（标题、作者、日期等信息） */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .page-info {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        /* ===== 文档内容区样式 ===== */
+        .document-content {
+            min-height: 800px;
+        }
+
+        /* 段落样式：首行缩进2em，1.8倍行距 */
+        .document-content p {
+            margin: 8px 0;
+            line-height: 1.8;
+            text-indent: 2em;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 一级标题：底部蓝色边框 */
+        .document-content h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #165DFF;
+        }
+
+        .document-content h2 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 16px 0 10px 0;
+        }
+
+        .document-content h3 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 14px 0 8px 0;
+        }
+
+        /* 列表样式 */
+        .document-content ul, .document-content ol {
+            margin: 8px 0 8px 24px;
+            line-height: 1.8;
+        }
+
+        .document-content li {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 引用块样式：左侧蓝色边框 + 浅灰背景 */
+        .document-content blockquote {
+            border-left: 4px solid #165DFF;
+            padding-left: 16px;
+            margin: 12px 0;
+            color: #666;
+            font-style: italic;
+            background-color: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* 行内代码样式 */
+        .document-content code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        /* 分割线样式 */
+        .document-content hr {
+            border: none;
+            border-top: 1px dashed #d1d5db;
+            margin: 24px 0;
+        }
+
+        /* 表格样式 */
+        .document-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+
+        .document-content th, .document-content td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .document-content th {
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .document-content td {
+            color: #333;
+        }
+
+        /* ===== 自定义滚动条样式 ===== */
+        .scrollbar-slim::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .scrollbar-slim::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 3px;
+        }
+
+        .scrollbar-slim::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- 主布局容器 -->
+    <div class="wps-layout">
+        <!-- 主内容区：顶部工具栏 + 编辑区 -->
+        <div class="main-content">
+            <!-- 顶部工具栏：文档标题、保存状态、操作按钮 -->
+            <div class="top-bar">
+                <!-- 左侧：文档标题和保存状态 -->
+                <div>
+                    <span class="doc-title">
+                        <i class="fa fa-file-text-o" style="color: #FFC107;"></i>
+                        EDIT
+                    </span>
+                    <span class="doc-status">已自动保存</span>
+                </div>
+                <!-- 右侧：操作按钮组 -->
+                <div class="top-actions">
+                    <button class="action-btn">
+                        <i class="fa fa-share-alt"></i>
+                        <span>分享</span>
+                    </button>
+                    <button class="action-btn">
+                        <i class="fa fa-history"></i>
+                        <span>历史</span>
+                    </button>
+                    <button class="action-btn primary">
+                        <i class="fa fa-download"></i>
+                        <span>下载</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 编辑区：灰色背景中居中显示 A4 纸张 -->
+            <div class="editor-area scrollbar-slim">
+                <!-- A4 纸张：可编辑区域 -->
+                <div class="document-paper" contenteditable="true">
+                    <!-- 文档内容区 -->
+                    <div class="document-content">
+                        <p><br></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
