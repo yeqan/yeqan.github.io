@@ -3,157 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor</title>
-    <!-- 引入 Tailwind CSS 框架（CDN） -->
+    <title>EDIT</title>
+    <!-- CDN 引用 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Font Awesome 图标库（CDN） -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
-        /* ===== 全局重置 ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        /* ===== 基础布局样式 ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background-color: #f5f5f5;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* 主布局容器：弹性布局，撑满整个视口高度 */
-        .wps-layout {
-            display: flex;
-            height: 100vh;
-        }
-
-        /* 主内容区：占据剩余空间，纵向排列 */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* ===== 顶部工具栏样式 ===== */
+        /* ===== 顶部工具栏 ===== */
         .top-bar {
-            height: 48px;
-            background-color: #ffffff;
-            border-bottom: 1px solid #e0e0e0;
+            height: 56px;                                      /* [修改] 高度从 48px 增加到 56px */
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);  /* [修改] 添加渐变背景 */
+            border-bottom: 1px solid #e8e8e8;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 16px;
+            padding: 0 24px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);        /* [修改] 添加底部阴影 */
         }
 
-        /* 文档标题样式 */
-        .doc-title {
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
+        .doc-status {
+            font-size: 13px;
+            color: #999;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        /* 文档保存状态提示 */
-        .doc-status {
-            font-size: 12px;
-            color: #999;
-            margin-left: 8px;
+        .doc-status .dot {                                     /* [新增] 绿色圆点状态指示 */
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #52c41a;
         }
 
-        /* 顶部按钮容器 */
         .top-actions {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        /* 通用按钮样式 */
         .action-btn {
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
+            padding: 7px 14px;
             font-size: 13px;
-            color: #666;
-            background-color: #f5f5f5;
-            border: none;
-            border-radius: 4px;
+            color: #555;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;                                /* [修改] 圆角从 4px 增加到 6px */
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
         }
 
         .action-btn:hover {
-            background-color: #e8e8e8;
+            background-color: #f5f5f5;
+            border-color: #d0d0d0;
         }
 
-        /* 主要按钮（下载按钮） */
         .action-btn.primary {
             background-color: #165DFF;
-            color: #ffffff;
+            color: #fff;
+            border-color: #165DFF;
         }
 
         .action-btn.primary:hover {
             background-color: #0d47a1;
+            border-color: #0d47a1;
         }
 
-        /* ===== 编辑区样式 ===== */
-        /* 灰色背景的编辑区域容器 */
+        /* ===== 编辑区 ===== */
         .editor-area {
             flex: 1;
             overflow-y: auto;
             background-color: #e8e8e8;
             padding: 24px 0;
+            height: calc(100vh - 56px);                        /* [修改] 高度适配新工具栏 */
         }
 
-        /* A4 纸张样式：居中显示，模拟真实文档效果 */
         .document-paper {
-            width: 794px;          /* A4 宽度（96dpi） */
-            min-height: 1122px;    /* A4 高度（96dpi） */
-            background-color: #ffffff;
+            width: 794px;
+            min-height: 1122px;
+            background-color: #fff;
             margin: 0 auto;
-            padding: 60px 48px;    /* 模拟页边距 */
+            padding: 60px 48px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
             outline: none;
-            position: relative;
         }
 
-        .document-paper:focus {
-            outline: none;
-        }
+        .document-paper:focus { outline: none; }
 
-        /* 页头样式（标题、作者、日期等信息） */
-        .page-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+        .document-content { min-height: 800px; }
 
-        .page-title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .page-info {
-            font-size: 12px;
-            color: #999;
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-        }
-
-        /* ===== 文档内容区样式 ===== */
-        .document-content {
-            min-height: 800px;
-        }
-
-        /* 段落样式：首行缩进2em，1.8倍行距 */
         .document-content p {
             margin: 8px 0;
             line-height: 1.8;
@@ -162,7 +111,6 @@
             color: #333;
         }
 
-        /* 一级标题：底部蓝色边框 */
         .document-content h1 {
             font-size: 20px;
             font-weight: bold;
@@ -186,7 +134,6 @@
             margin: 14px 0 8px 0;
         }
 
-        /* 列表样式 */
         .document-content ul, .document-content ol {
             margin: 8px 0 8px 24px;
             line-height: 1.8;
@@ -198,10 +145,8 @@
             color: #333;
         }
 
-        /* 引用块样式：左侧蓝色边框 + 浅灰背景 */
         .document-content blockquote {
             border-left: 4px solid #165DFF;
-            padding-left: 16px;
             margin: 12px 0;
             color: #666;
             font-style: italic;
@@ -210,7 +155,6 @@
             border-radius: 0 4px 4px 0;
         }
 
-        /* 行内代码样式 */
         .document-content code {
             background-color: #f3f4f6;
             padding: 2px 6px;
@@ -220,14 +164,12 @@
             color: #d63384;
         }
 
-        /* 分割线样式 */
         .document-content hr {
             border: none;
             border-top: 1px dashed #d1d5db;
             margin: 24px 0;
         }
 
-        /* 表格样式 */
         .document-content table {
             width: 100%;
             border-collapse: collapse;
@@ -247,65 +189,66 @@
             color: #333;
         }
 
-        .document-content td {
-            color: #333;
-        }
-
-        /* ===== 自定义滚动条样式 ===== */
-        .scrollbar-slim::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        .scrollbar-slim::-webkit-scrollbar-thumb {
-            background-color: rgba(156, 163, 175, 0.5);
-            border-radius: 3px;
-        }
-
-        .scrollbar-slim::-webkit-scrollbar-track {
-            background: transparent;
-        }
+        /* ===== 滚动条 ===== */
+        .scrollbar-slim::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-slim::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 3px; }
+        .scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
 <body>
-    <!-- 主布局容器 -->
-    <div class="wps-layout">
-        <!-- 主内容区：顶部工具栏 + 编辑区 -->
-        <div class="main-content">
-            <!-- 顶部工具栏：文档标题、保存状态、操作按钮 -->
-            <div class="top-bar">
-                <!-- 左侧：文档标题和保存状态 -->
-                <div>
-                    <span class="doc-status">已自动保存</span>
-                </div>
-                <!-- 右侧：操作按钮组 -->
-                <div class="top-actions">
-                    <button class="action-btn">
-                        <i class="fa fa-share-alt"></i>
-                        <span></span>
-                    </button>
-                    <button class="action-btn">
-                        <i class="fa fa-history"></i>
-                        <span>历史</span>
-                    </button>
-                    <button class="action-btn primary">
-                        <i class="fa fa-download"></i>
-                        <span>下载</span>
-                    </button>
-                </div>
-            </div>
+    <!-- [修改] 顶部工具栏：美化布局，删除分享/历史按钮，新增复制按钮 -->
+    <div class="top-bar">
+        <div class="doc-status">
+            <span class="dot"></span>                          <!-- [新增] 绿色圆点指示 -->
+            <span>已自动保存</span>
+        </div>
+        <div class="top-actions">
+            <!-- [新增] 复制按钮 -->
+            <button class="action-btn" id="copyBtn">
+                <i class="fa fa-copy"></i>
+                <span>复制</span>
+            </button>
+            <!-- [保留] 下载按钮（优化样式） -->
+            <button class="action-btn primary" id="downloadBtn">
+                <i class="fa fa-download"></i>
+                <span>下载</span>
+            </button>
+            <!-- [删除] 分享按钮 -->
+            <!-- [删除] 历史按钮 -->
+        </div>
+    </div>
 
-            <!-- 编辑区：灰色背景中居中显示 A4 纸张 -->
-            <div class="editor-area scrollbar-slim">
-                <!-- A4 纸张：可编辑区域 -->
-                <div class="document-paper" contenteditable="true">
-                    <!-- 文档内容区 -->
-                    <div class="document-content">
-                        <p><br></p>
-                    </div>
-                </div>
+    <!-- [修改] 编辑区：删除 .wps-layout 和 .main-content 嵌套层，简化结构 -->
+    <div class="editor-area scrollbar-slim">
+        <div class="document-paper" contenteditable="true">
+            <div class="document-content">
+                <p><br></p>
             </div>
         </div>
     </div>
+
+    <!-- [新增] JavaScript：复制和下载功能 -->
+    <script>
+        // 复制内容到剪贴板
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const content = document.querySelector('.document-content').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('复制成功！');
+            }).catch(() => {
+                alert('复制失败，请手动复制。');
+            });
+        });
+
+        // 下载文档内容为 txt 文件
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const content = document.querySelector('.document-content').innerText;
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `document_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+    </script>
 </body>
 </html>
