@@ -4,239 +4,193 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDIT</title>
-    <!-- CDN 引用：Tailwind CSS 工具类框架 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- CDN 引用：Font Awesome 图标库 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
-        /* ===== 全局重置 ===== */
-        /* 清除所有元素默认外边距和内边距，统一使用 border-box 盒模型 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* ===== 页面主体 ===== */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; /* 系统字体栈，适配多平台 */
-            background-color: #f5f5f5;        /* 页面背景色：浅灰 */
-            height: 100vh;                    /* 视口高度，撑满屏幕 */
-            overflow: hidden;                 /* 隐藏页面级滚动条，由编辑区内部滚动 */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* ===== 顶部工具栏 ===== */
+        /* 顶部工具栏 */
         .top-bar {
-            height: 56px;                                      /* 工具栏固定高度 56px */
-            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);  /* 白色到浅灰的渐变背景 */
-            border-bottom: 1px solid #e8e8e8;                  /* 底部分割线 */
-            display: flex;                                     /* 弹性布局 */
-            align-items: center;                               /* 垂直居中 */
-            justify-content: space-between;                    /* 两端对齐：左侧状态，右侧按钮 */
-            padding: 0 24px;                                   /* 左右内边距 24px */
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);         /* 底部轻微阴影 */
+            height: 56px;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 24px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
-        /* ===== 文档状态指示（左侧） ===== */
-        .doc-status {
-            font-size: 13px;                /* 字号 13px */
-            color: #999;                    /* 文字颜色：灰色 */
-            display: flex;                  /* 弹性布局，圆点与文字水平排列 */
-            align-items: center;            /* 垂直居中 */
-            gap: 6px;                       /* 圆点与文字间距 6px */
-        }
-
-        /* 绿色圆点状态指示器 */
-        .doc-status .dot {
-            width: 6px;                     /* 圆点宽度 */
-            height: 6px;                    /* 圆点高度 */
-            border-radius: 50%;             /* 圆形 */
-            background-color: #52c41a;      /* 绿色，表示已保存 */
-        }
-
-        /* ===== 顶部按钮容器（右侧） ===== */
         .top-actions {
-            display: flex;                  /* 弹性布局，按钮水平排列 */
-            align-items: center;            /* 垂直居中 */
-            gap: 8px;                       /* 按钮间距 8px */
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* ===== 按钮基础样式 ===== */
+        /* 按钮样式 */
         .action-btn {
-            display: flex;                  /* 弹性布局，图标与文字水平排列 */
-            align-items: center;            /* 垂直居中 */
-            gap: 6px;                       /* 图标与文字间距 6px */
-            padding: 7px 14px;              /* 上下内边距 7px，左右 14px */
-            font-size: 13px;                /* 字号 13px */
-            color: #555;                    /* 文字颜色：深灰 */
-            background-color: #fff;         /* 背景色：白色 */
-            border: 1px solid #e0e0e0;      /* 边框：浅灰 */
-            border-radius: 6px;             /* 圆角 6px */
-            cursor: pointer;                /* 鼠标指针为手型 */
-            transition: all 0.2s;           /* 过渡动画 0.2s */
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            font-size: 13px;
+            color: #555;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        /* 按钮悬停状态 */
         .action-btn:hover {
-            background-color: #f5f5f5;      /* 悬停背景色：浅灰 */
-            border-color: #d0d0d0;          /* 悬停边框色：稍深灰 */
+            background-color: #f5f5f5;
+            border-color: #d0d0d0;
         }
 
-        /* 主按钮样式（下载按钮） */
-        .action-btn.primary {
-            background-color: #165DFF;      /* 蓝色背景 */
-            color: #fff;                    /* 白色文字 */
-            border-color: #165DFF;          /* 蓝色边框 */
+        .action-btn:focus {
+            outline: none;
+            background-color: #fff;
+            border-color: #e0e0e0;
         }
 
-        /* 主按钮悬停状态 */
-        .action-btn.primary:hover {
-            background-color: #0d47a1;      /* 悬停背景色：深蓝 */
-            border-color: #0d47a1;          /* 悬停边框色：深蓝 */
+        .action-btn:active {
+            background-color: #ebebeb;
         }
 
-        /* ===== 编辑区容器 ===== */
+        /* 编辑区 */
         .editor-area {
-            flex: 1;                        /* 占满剩余空间 */
-            overflow-y: auto;               /* 纵向滚动 */
-            background-color: #e8e8e8;      /* 编辑区背景色：灰色，衬托白色纸张 */
-            padding: 24px 0;                /* 上下内边距 24px */
-            height: calc(100vh - 56px);     /* 高度 = 视口高度 - 工具栏高度 */
+            flex: 1;
+            overflow-y: auto;
+            background-color: #e8e8e8;
+            padding: 24px 0;
+            height: calc(100vh - 56px);
         }
 
-        /* ===== A4 纸张样式 ===== */
+        /* A4 纸张 */
         .document-paper {
-            width: 794px;                   /* A4 纸宽度（96dpi） */
-            min-height: 1122px;             /* A4 纸最小高度（96dpi） */
-            background-color: #fff;         /* 白色纸张背景 */
-            margin: 0 auto;                 /* 水平居中 */
-            padding: 60px 48px;             /* 纸张内边距：上下 60px，左右 48px */
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08); /* 双层阴影，模拟纸张悬浮效果 */
-            outline: none;                  /* 移除聚焦时的默认轮廓 */
+            width: 794px;
+            min-height: 1122px;
+            background-color: #fff;
+            margin: 0 auto;
+            padding: 60px 48px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
+            outline: none;
         }
 
-        /* 纸张聚焦时移除轮廓 */
         .document-paper:focus { outline: none; }
 
-        /* ===== 文档内容区域 ===== */
-        .document-content { min-height: 800px; }  /* 内容区最小高度 800px */
+        .document-content { min-height: 800px; }
 
-        /* 段落样式 */
         .document-content p {
-            margin: 8px 0;                  /* 上下外边距 8px */
-            line-height: 1.8;               /* 行高 1.8 倍 */
-            text-indent: 2em;               /* 首行缩进 2 字符 */
-            font-size: 14px;                /* 字号 14px */
-            color: #333;                    /* 文字颜色：深灰 */
+            margin: 8px 0;
+            line-height: 1.8;
+            text-indent: 2em;
+            font-size: 14px;
+            color: #333;
         }
 
-        /* 一级标题 */
         .document-content h1 {
-            font-size: 20px;                /* 字号 20px */
-            font-weight: bold;              /* 加粗 */
-            color: #333;                    /* 文字颜色：深灰 */
-            margin: 20px 0 12px 0;          /* 上 20px，下 12px 外边距 */
-            padding-bottom: 6px;            /* 底部内边距 6px */
-            border-bottom: 2px solid #165DFF; /* 蓝色下划线 */
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #165DFF;
         }
 
-        /* 二级标题 */
         .document-content h2 {
-            font-size: 18px;                /* 字号 18px */
-            font-weight: bold;              /* 加粗 */
-            color: #333;                    /* 文字颜色：深灰 */
-            margin: 16px 0 10px 0;          /* 上 16px，下 10px 外边距 */
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 16px 0 10px 0;
         }
 
-        /* 三级标题 */
         .document-content h3 {
-            font-size: 16px;                /* 字号 16px */
-            font-weight: bold;              /* 加粗 */
-            color: #333;                    /* 文字颜色：深灰 */
-            margin: 14px 0 8px 0;           /* 上 14px，下 8px 外边距 */
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 14px 0 8px 0;
         }
 
-        /* 无序/有序列表 */
         .document-content ul, .document-content ol {
-            margin: 8px 0 8px 24px;         /* 上 8px，下 8px，左 24px 外边距 */
-            line-height: 1.8;               /* 行高 1.8 倍 */
+            margin: 8px 0 8px 24px;
+            line-height: 1.8;
         }
 
-        /* 列表项 */
         .document-content li {
-            margin: 4px 0;                  /* 上下外边距 4px */
-            font-size: 14px;                /* 字号 14px */
-            color: #333;                    /* 文字颜色：深灰 */
+            margin: 4px 0;
+            font-size: 14px;
+            color: #333;
         }
 
-        /* 引用块 */
         .document-content blockquote {
-            border-left: 4px solid #165DFF; /* 左侧蓝色边框 */
-            margin: 12px 0;                 /* 上下外边距 12px */
-            color: #666;                    /* 文字颜色：中灰 */
-            font-style: italic;             /* 斜体 */
-            background-color: #f8f9fa;      /* 浅灰背景 */
-            padding: 12px 16px;             /* 内边距：上下 12px，左右 16px */
-            border-radius: 0 4px 4px 0;     /* 右侧圆角 */
+            border-left: 4px solid #165DFF;
+            margin: 12px 0;
+            color: #666;
+            font-style: italic;
+            background-color: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 0 4px 4px 0;
         }
 
-        /* 行内代码 */
         .document-content code {
-            background-color: #f3f4f6;      /* 浅灰背景 */
-            padding: 2px 6px;               /* 内边距：上下 2px，左右 6px */
-            border-radius: 3px;             /* 圆角 3px */
-            font-family: Consolas, Monaco, monospace; /* 等宽字体 */
-            font-size: 0.9em;               /* 字号为父元素的 0.9 倍 */
-            color: #d63384;                 /* 粉红色文字 */
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d63384;
         }
 
-        /* 分割线 */
         .document-content hr {
-            border: none;                   /* 移除默认边框 */
-            border-top: 1px dashed #d1d5db; /* 虚线分割线 */
-            margin: 24px 0;                 /* 上下外边距 24px */
+            border: none;
+            border-top: 1px dashed #d1d5db;
+            margin: 24px 0;
         }
 
-        /* 表格 */
         .document-content table {
-            width: 100%;                    /* 表格宽度 100% */
-            border-collapse: collapse;      /* 合并边框 */
-            margin: 12px 0;                 /* 上下外边距 12px */
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
         }
 
-        /* 表头和单元格 */
         .document-content th, .document-content td {
-            border: 1px solid #e5e7eb;      /* 单元格边框 */
-            padding: 8px 12px;              /* 内边距：上下 8px，左右 12px */
-            text-align: left;               /* 左对齐 */
-            font-size: 14px;                /* 字号 14px */
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 14px;
         }
 
-        /* 表头样式 */
         .document-content th {
-            background-color: #f9fafb;      /* 浅灰背景 */
-            font-weight: bold;              /* 加粗 */
-            color: #333;                    /* 文字颜色：深灰 */
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: #333;
         }
 
-        /* ===== 自定义滚动条（WebKit 内核浏览器） ===== */
-        .scrollbar-slim::-webkit-scrollbar { width: 6px; height: 6px; }              /* 滚动条宽高 6px */
-        .scrollbar-slim::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 3px; } /* 滚动条滑块：半透明灰色，圆角 3px */
-        .scrollbar-slim::-webkit-scrollbar-track { background: transparent; }         /* 滚动条轨道：透明 */
+        /* 自定义滚动条 */
+        .scrollbar-slim::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-slim::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 3px; }
+        .scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
 <body>
-    <!-- 顶部工具栏：左侧显示文档保存状态，右侧放置操作按钮 -->
     <div class="top-bar">
-        <!-- 文档状态：绿色圆点 + "已自动保存"文字 -->
-        <div class="doc-status">
-            <span class="dot"></span>
-            <span>已自动保存</span>
-        </div>
-        <!-- 操作按钮组 -->
         <div class="top-actions">
-            <!-- 复制按钮：点击复制文档内容到剪贴板 -->
+            <button class="action-btn" id="importBtn">
+                <i class="fa fa-upload"></i>
+                <span>导入</span>
+            </button>
             <button class="action-btn" id="copyBtn">
                 <i class="fa fa-copy"></i>
                 <span>复制</span>
             </button>
-            <!-- 下载按钮：点击将文档内容下载为 txt 文件 -->
             <button class="action-btn" id="downloadBtn">
                 <i class="fa fa-download"></i>
                 <span>下载</span>
@@ -244,9 +198,7 @@
         </div>
     </div>
 
-    <!-- 编辑区：灰色背景上居中显示 A4 纸张 -->
     <div class="editor-area scrollbar-slim">
-        <!-- A4 纸张，可编辑区域 -->
         <div class="document-paper" contenteditable="true">
             <div class="document-content">
                 <p><br></p>
@@ -254,27 +206,26 @@
         </div>
     </div>
 
-    <!-- JavaScript：复制和下载功能 -->
     <script>
-        // 复制按钮：将文档内容复制到系统剪贴板
+        // 复制
         document.getElementById('copyBtn').addEventListener('click', () => {
-            const content = document.querySelector('.document-content').innerText;  // 获取文档纯文本内容
-            navigator.clipboard.writeText(content).then(() => {                     // 调用剪贴板 API 写入文本
-                alert('复制成功！');                                                  // 成功提示
+            const content = document.querySelector('.document-content').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('复制成功！');
             }).catch(() => {
-                alert('复制失败，请手动复制。');                                        // 失败提示
+                alert('复制失败，请手动复制。');
             });
         });
 
-        // 下载按钮：将文档内容导出为 txt 文件并下载
+        // 下载
         document.getElementById('downloadBtn').addEventListener('click', () => {
-            const content = document.querySelector('.document-content').innerText;  // 获取文档纯文本内容
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' }); // 创建 Blob 对象，指定为 UTF-8 文本类型
-            const a = document.createElement('a');                                  // 创建临时 <a> 标签用于触发下载
-            a.href = URL.createObjectURL(blob);                                     // 生成临时下载 URL
-            a.download = `document_${Date.now()}.txt`;                              // 设置下载文件名（带时间戳）
-            a.click();                                                              // 触发点击事件，执行下载
-            URL.revokeObjectURL(a.href);                                            // 释放临时 URL，避免内存泄漏
+            const content = document.querySelector('.document-content').innerText;
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `document_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
         });
     </script>
 </body>
