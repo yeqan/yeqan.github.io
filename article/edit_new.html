@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDIT</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/crypto-js.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -178,14 +179,143 @@
         .scrollbar-slim::-webkit-scrollbar { width: 6px; height: 6px; }
         .scrollbar-slim::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 3px; }
         .scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
+
+        /* 文件名显示 */
+        .file-name-display {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-name-display.hidden {
+            display: none;
+        }
+
+        /* 对话框样式 */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .dialog-overlay.hidden {
+            display: none;
+        }
+
+        .dialog-box {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .dialog-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .dialog-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .dialog-input:focus {
+            border-color: #165DFF;
+            box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
+        }
+
+        .dialog-checkbox-group {
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .dialog-checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .dialog-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .dialog-btn.primary {
+            background-color: #165DFF;
+            color: #fff;
+        }
+
+        .dialog-btn.primary:hover {
+            background-color: #0052cc;
+        }
+
+        .dialog-btn.danger {
+            background-color: #ff4d4f;
+            color: #fff;
+        }
+
+        .dialog-btn.danger:hover {
+            background-color: #ff7875;
+        }
+
+        .dialog-btn.secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .dialog-btn.secondary:hover {
+            background-color: #e0e0e0;
+        }
     </style>
 </head>
 <body>
     <div class="top-bar">
+        <span class="file-name-display hidden" id="fileNameDisplay"></span>
         <div class="top-actions">
             <button class="action-btn" id="importBtn">
                 <i class="fa fa-upload"></i>
                 <span>导入</span>
+            </button>
+            <button class="action-btn" id="keyManageBtn">
+                <i class="fa fa-key"></i>
+                <span>密钥</span>
             </button>
             <button class="action-btn" id="copyBtn">
                 <i class="fa fa-copy"></i>
@@ -206,26 +336,282 @@
         </div>
     </div>
 
+    <!-- 导入对话框 -->
+    <div class="dialog-overlay hidden" id="importDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">导入文件</div>
+            <input type="text" class="dialog-input" id="importInput" placeholder="输入文件名（不含后缀）">
+            <div class="dialog-buttons">
+                <button class="dialog-btn secondary" id="importCancelBtn">取消</button>
+                <button class="dialog-btn primary" id="importConfirmBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 密钥管理对话框 -->
+    <div class="dialog-overlay hidden" id="keyDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">密钥管理</div>
+            <input type="password" class="dialog-input" id="keyInput" placeholder="输入密钥">
+            <div class="dialog-checkbox-group">
+                <label>
+                    <input type="checkbox" id="showKeyCheckbox">
+                    <span>显示密钥</span>
+                </label>
+            </div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn secondary" id="keyCancelBtn">取消</button>
+                <button class="dialog-btn danger" id="keyClearBtn">清除</button>
+                <button class="dialog-btn primary" id="keyConfirmBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 复制
-        document.getElementById('copyBtn').addEventListener('click', () => {
-            const content = document.querySelector('.document-content').innerText;
-            navigator.clipboard.writeText(content).then(() => {
+        // DOM 元素引用
+        const importBtn = document.getElementById('importBtn');
+        const keyManageBtn = document.getElementById('keyManageBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const importDialog = document.getElementById('importDialog');
+        const importInput = document.getElementById('importInput');
+        const importConfirmBtn = document.getElementById('importConfirmBtn');
+        const importCancelBtn = document.getElementById('importCancelBtn');
+        const keyDialog = document.getElementById('keyDialog');
+        const keyInput = document.getElementById('keyInput');
+        const keyConfirmBtn = document.getElementById('keyConfirmBtn');
+        const keyClearBtn = document.getElementById('keyClearBtn');
+        const keyCancelBtn = document.getElementById('keyCancelBtn');
+        const showKeyCheckbox = document.getElementById('showKeyCheckbox');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const documentContent = document.querySelector('.document-content');
+
+        // 状态变量
+        let currentKey = localStorage.getItem('editorKey') || '';
+        let currentFileName = '';
+
+        // 打开导入对话框
+        function openImportDialog() {
+            importInput.value = '';
+            importDialog.classList.remove('hidden');
+            importInput.focus();
+        }
+
+        // 关闭导入对话框
+        function closeImportDialog() {
+            importDialog.classList.add('hidden');
+        }
+
+        // 打开密钥管理对话框
+        function openKeyDialog() {
+            keyInput.value = currentKey;
+            keyInput.type = 'password';
+            showKeyCheckbox.checked = false;
+            keyDialog.classList.remove('hidden');
+            keyInput.focus();
+        }
+
+        // 关闭密钥管理对话框
+        function closeKeyDialog() {
+            keyDialog.classList.add('hidden');
+            keyInput.value = '';
+        }
+
+        // 处理导入文件
+        async function handleImport(fileName) {
+            try {
+                // 尝试查找匹配的文件（不考虑后缀名）
+                const possibleFiles = [
+                    `${fileName}.html`,
+                    `${fileName}.txt`,
+                    `${fileName}.md`,
+                    `${fileName}`,
+                ];
+
+                let content = null;
+                let foundFileName = '';
+
+                for (const file of possibleFiles) {
+                    try {
+                        const response = await fetch(file);
+                        if (response.ok) {
+                            content = await response.text();
+                            foundFileName = fileName;
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+
+                if (content === null) {
+                    alert('未找到匹配的文件！');
+                    return;
+                }
+
+                // 如果有密钥且内容不为空，则解密
+                if (currentKey && content.trim()) {
+                    try {
+                        const decrypted = CryptoJS.DES.decrypt(content, currentKey).toString(CryptoJS.enc.Utf8);
+                        documentContent.innerHTML = `<p>${decrypted.replace(/\n/g, '</p><p>')}</p>`;
+                    } catch (e) {
+                        alert('解密失败，请检查密钥是否正确！');
+                        console.error('解密错误:', e);
+                        return;
+                    }
+                } else {
+                    documentContent.innerHTML = `<p>${content.replace(/\n/g, '</p><p>')}</p>`;
+                }
+
+                // 更新文件名显示
+                currentFileName = foundFileName;
+                fileNameDisplay.textContent = foundFileName;
+                fileNameDisplay.classList.remove('hidden');
+
+                alert('导入成功！');
+                closeImportDialog();
+            } catch (error) {
+                alert('导入失败：' + error.message);
+                console.error('导入错误:', error);
+            }
+        }
+
+        // 处理密钥保存
+        function handleKeySave(newKey) {
+            if (!newKey || newKey.trim() === '') {
+                alert('密钥不能为空！');
+                return;
+            }
+            currentKey = newKey;
+            localStorage.setItem('editorKey', newKey);
+            alert('密钥已保存！');
+            closeKeyDialog();
+        }
+
+        // 处理密钥清除
+        function handleKeyClear() {
+            if (confirm('确定要清除密钥吗？')) {
+                currentKey = '';
+                localStorage.removeItem('editorKey');
+                alert('密钥已清除！');
+                closeKeyDialog();
+            }
+        }
+
+        // 复制功能
+        copyBtn.addEventListener('click', async () => {
+            const content = documentContent.innerText;
+            if (!content.trim()) {
+                alert('编辑区内容为空！');
+                return;
+            }
+
+            // 如果有密钥，则加密后复制
+            const copyContent = currentKey
+                ? CryptoJS.DES.encrypt(content, currentKey).toString()
+                : content;
+
+            try {
+                await navigator.clipboard.writeText(copyContent);
                 alert('复制成功！');
-            }).catch(() => {
-                alert('复制失败，请手动复制。');
-            });
+            } catch (error) {
+                // 备用方案
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = copyContent;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+                alert('复制成功！');
+            }
         });
 
-        // 下载
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            const content = document.querySelector('.document-content').innerText;
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        // 下载功能
+        downloadBtn.addEventListener('click', () => {
+            const content = documentContent.innerText;
+            if (!content.trim()) {
+                alert('编辑区内容为空！');
+                return;
+            }
+
+            // 如果有密钥，则加密后下载
+            const downloadContent = currentKey
+                ? CryptoJS.DES.encrypt(content, currentKey).toString()
+                : content;
+
+            const blob = new Blob([downloadContent], { type: 'text/plain;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `document_${Date.now()}.txt`;
+            
+            // 根据文件名或时间戳生成下载文件名
+            if (currentFileName) {
+                a.download = `${currentFileName}.txt`;
+            } else {
+                a.download = `document_${Date.now()}.txt`;
+            }
+            
             a.click();
             URL.revokeObjectURL(a.href);
+        });
+
+        // 导入按钮事件
+        importBtn.addEventListener('click', openImportDialog);
+
+        // 导入对话框按钮事件
+        importConfirmBtn.addEventListener('click', () => {
+            const fileName = importInput.value.trim();
+            if (!fileName) {
+                alert('请输入文件名！');
+                return;
+            }
+            handleImport(fileName);
+        });
+
+        importCancelBtn.addEventListener('click', closeImportDialog);
+
+        // 导入输入框Enter键确认
+        importInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                importConfirmBtn.click();
+            }
+        });
+
+        // 密钥管理按钮事件
+        keyManageBtn.addEventListener('click', openKeyDialog);
+
+        // 密钥对话框按钮事件
+        keyConfirmBtn.addEventListener('click', () => {
+            const newKey = keyInput.value.trim();
+            handleKeySave(newKey);
+        });
+
+        keyClearBtn.addEventListener('click', handleKeyClear);
+
+        keyCancelBtn.addEventListener('click', closeKeyDialog);
+
+        // 显示/隐藏密钥复选框
+        showKeyCheckbox.addEventListener('change', () => {
+            keyInput.type = showKeyCheckbox.checked ? 'text' : 'password';
+        });
+
+        // 密钥输入框Enter键确认
+        keyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                keyConfirmBtn.click();
+            }
+        });
+
+        // 点击对话框背景关闭
+        importDialog.addEventListener('click', (e) => {
+            if (e.target === importDialog) {
+                closeImportDialog();
+            }
+        });
+
+        keyDialog.addEventListener('click', (e) => {
+            if (e.target === keyDialog) {
+                closeKeyDialog();
+            }
         });
     </script>
 </body>
