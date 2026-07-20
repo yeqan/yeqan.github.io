@@ -88,7 +88,11 @@
 
         .document-paper:focus { outline: none; }
 
-        .document-content { min-height: 800px; }
+        .document-content {
+            min-height: 800px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
 
         .document-content p {
             margin: 8px 0;
@@ -455,14 +459,14 @@
                 if (currentKey && content.trim()) {
                     try {
                         const decrypted = CryptoJS.DES.decrypt(content, currentKey).toString(CryptoJS.enc.Utf8);
-                        documentContent.innerHTML = `<p>${decrypted.replace(/\n/g, '</p><p>')}</p>`;
+                        documentContent.textContent = decrypted;
                     } catch (e) {
                         alert('解密失败，请检查密钥是否正确！');
                         console.error('解密错误:', e);
                         return;
                     }
                 } else {
-                    documentContent.innerHTML = `<p>${content.replace(/\n/g, '</p><p>')}</p>`;
+                    documentContent.textContent = content;
                 }
 
                 // 更新文件名显示
