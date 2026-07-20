@@ -27,6 +27,7 @@
             justify-content: flex-end;
             padding: 0 24px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            position: relative;
         }
 
         .top-actions {
@@ -186,10 +187,11 @@
             left: 24px;
             top: 50%;
             transform: translateY(-50%);
-            font-weight: bold;
-            color: #333;
-            font-size: 14px;
-            max-width: 200px;
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 15px;
+            letter-spacing: 0.2px;
+            max-width: 220px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -309,9 +311,9 @@
     <div class="top-bar">
         <span class="file-name-display hidden" id="fileNameDisplay"></span>
         <div class="top-actions">
-            <button class="action-btn" id="importBtn">
+            <button class="action-btn" id="matchBtn">
                 <i class="fa fa-upload"></i>
-                <span>导入</span>
+                <span>匹配</span>
             </button>
             <button class="action-btn" id="keyManageBtn">
                 <i class="fa fa-key"></i>
@@ -336,14 +338,14 @@
         </div>
     </div>
 
-    <!-- 导入对话框 -->
-    <div class="dialog-overlay hidden" id="importDialog">
+    <!-- 匹配对话框 -->
+    <div class="dialog-overlay hidden" id="matchDialog">
         <div class="dialog-box">
-            <div class="dialog-title">导入文件</div>
-            <input type="text" class="dialog-input" id="importInput" placeholder="输入文件名（不含后缀）">
+            <div class="dialog-title">匹配文件</div>
+            <input type="text" class="dialog-input" id="matchInput" placeholder="输入文件名（不含后缀）">
             <div class="dialog-buttons">
-                <button class="dialog-btn secondary" id="importCancelBtn">取消</button>
-                <button class="dialog-btn primary" id="importConfirmBtn">确定</button>
+                <button class="dialog-btn secondary" id="matchCancelBtn">取消</button>
+                <button class="dialog-btn primary" id="matchConfirmBtn">确定</button>
             </div>
         </div>
     </div>
@@ -369,14 +371,14 @@
 
     <script>
         // DOM 元素引用
-        const importBtn = document.getElementById('importBtn');
+        const matchBtn = document.getElementById('matchBtn');
         const keyManageBtn = document.getElementById('keyManageBtn');
         const copyBtn = document.getElementById('copyBtn');
         const downloadBtn = document.getElementById('downloadBtn');
-        const importDialog = document.getElementById('importDialog');
-        const importInput = document.getElementById('importInput');
-        const importConfirmBtn = document.getElementById('importConfirmBtn');
-        const importCancelBtn = document.getElementById('importCancelBtn');
+        const matchDialog = document.getElementById('matchDialog');
+        const matchInput = document.getElementById('matchInput');
+        const matchConfirmBtn = document.getElementById('matchConfirmBtn');
+        const matchCancelBtn = document.getElementById('matchCancelBtn');
         const keyDialog = document.getElementById('keyDialog');
         const keyInput = document.getElementById('keyInput');
         const keyConfirmBtn = document.getElementById('keyConfirmBtn');
@@ -390,16 +392,16 @@
         let currentKey = localStorage.getItem('editorKey') || '';
         let currentFileName = '';
 
-        // 打开导入对话框
-        function openImportDialog() {
-            importInput.value = '';
-            importDialog.classList.remove('hidden');
-            importInput.focus();
+        // 打开匹配对话框
+        function openMatchDialog() {
+            matchInput.value = '';
+            matchDialog.classList.remove('hidden');
+            matchInput.focus();
         }
 
-        // 关闭导入对话框
-        function closeImportDialog() {
-            importDialog.classList.add('hidden');
+        // 关闭匹配对话框
+        function closeMatchDialog() {
+            matchDialog.classList.add('hidden');
         }
 
         // 打开密钥管理对话框
@@ -417,8 +419,8 @@
             keyInput.value = '';
         }
 
-        // 处理导入文件
-        async function handleImport(fileName) {
+        // 处理匹配文件
+        async function handleMatch(fileName) {
             try {
                 // 尝试查找匹配的文件（不考虑后缀名）
                 const possibleFiles = [
@@ -468,11 +470,11 @@
                 fileNameDisplay.textContent = foundFileName;
                 fileNameDisplay.classList.remove('hidden');
 
-                alert('导入成功！');
-                closeImportDialog();
+                alert('匹配成功！');
+                closeMatchDialog();
             } catch (error) {
-                alert('导入失败：' + error.message);
-                console.error('导入错误:', error);
+                alert('匹配失败：' + error.message);
+                console.error('匹配错误:', error);
             }
         }
 
@@ -554,25 +556,25 @@
             URL.revokeObjectURL(a.href);
         });
 
-        // 导入按钮事件
-        importBtn.addEventListener('click', openImportDialog);
+        // 匹配按钮事件
+        matchBtn.addEventListener('click', openMatchDialog);
 
-        // 导入对话框按钮事件
-        importConfirmBtn.addEventListener('click', () => {
-            const fileName = importInput.value.trim();
+        // 匹配对话框按钮事件
+        matchConfirmBtn.addEventListener('click', () => {
+            const fileName = matchInput.value.trim();
             if (!fileName) {
                 alert('请输入文件名！');
                 return;
             }
-            handleImport(fileName);
+            handleMatch(fileName);
         });
 
-        importCancelBtn.addEventListener('click', closeImportDialog);
+        matchCancelBtn.addEventListener('click', closeMatchDialog);
 
-        // 导入输入框Enter键确认
-        importInput.addEventListener('keypress', (e) => {
+        // 匹配输入框Enter键确认
+        matchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                importConfirmBtn.click();
+                matchConfirmBtn.click();
             }
         });
 
@@ -602,9 +604,9 @@
         });
 
         // 点击对话框背景关闭
-        importDialog.addEventListener('click', (e) => {
-            if (e.target === importDialog) {
-                closeImportDialog();
+        matchDialog.addEventListener('click', (e) => {
+            if (e.target === matchDialog) {
+                closeMatchDialog();
             }
         });
 
