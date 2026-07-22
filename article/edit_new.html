@@ -29,6 +29,7 @@
             padding: 0 24px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
             position: relative;
+            contain: layout paint;
         }
 
         .top-actions {
@@ -49,7 +50,7 @@
             border: 1px solid #e0e0e0;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
         }
 
         .action-btn:hover {
@@ -84,6 +85,7 @@
             margin: 0 auto;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
             outline: none;
+            contain: layout paint;
         }
 
         .document-paper:focus { outline: none; }
@@ -93,6 +95,8 @@
             padding: 60px 48px;
             word-break: break-word;
             outline: none;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
         }
 
         .document-content p, .document-content div {
@@ -281,7 +285,7 @@
             border: none;
             cursor: pointer;
             font-size: 13px;
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
         }
 
         .dialog-btn.primary {
@@ -337,7 +341,7 @@
 
     <div class="editor-area scrollbar-slim">
         <div class="document-paper">
-            <div class="document-content" contenteditable="true"></div>
+            <div class="document-content" contenteditable="plaintext-only" spellcheck="false"></div>
         </div>
     </div>
 
