@@ -83,7 +83,6 @@
             min-height: 1122px;
             background-color: #fff;
             margin: 0 auto;
-            padding: 60px 48px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
             outline: none;
         }
@@ -91,9 +90,10 @@
         .document-paper:focus { outline: none; }
 
         .document-content {
-            min-height: 800px;
-            white-space: pre-wrap;
+            min-height: 1122px;
+            padding: 60px 48px;
             word-break: break-word;
+            outline: none;
         }
 
         .document-content p, .document-content div {
@@ -337,8 +337,8 @@
     </div>
 
     <div class="editor-area scrollbar-slim">
-        <div class="document-paper" contenteditable="true">
-            <div class="document-content"></div>
+        <div class="document-paper">
+            <div class="document-content" contenteditable="true"></div>
         </div>
     </div>
 
@@ -624,14 +624,7 @@
         documentContent.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
-                const br = document.createElement('br');
-                range.insertNode(br);
-                range.setStartAfter(br);
-                range.setEndAfter(br);
-                selection.removeAllRanges();
-                selection.addRange(range);
+                document.execCommand('insertLineBreak');
             }
         });
     </script>
