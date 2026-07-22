@@ -96,9 +96,9 @@
             word-break: break-word;
         }
 
-        .document-content p {
-            margin: 8px 0;
-            line-height: 1.8;
+        .document-content p, .document-content div {
+            margin: 0;
+            line-height: 1.6;
             text-indent: 2em;
             font-size: 14px;
             color: #333;
@@ -617,6 +617,21 @@
         keyDialog.addEventListener('click', (e) => {
             if (e.target === keyDialog) {
                 closeKeyDialog();
+            }
+        });
+
+        // 处理 contenteditable 回车键，插入 <br> 而不是 <div>
+        documentContent.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const br = document.createElement('br');
+                range.insertNode(br);
+                range.setStartAfter(br);
+                range.setEndAfter(br);
+                selection.removeAllRanges();
+                selection.addRange(range);
             }
         });
     </script>
