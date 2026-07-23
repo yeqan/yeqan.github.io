@@ -21,6 +21,7 @@
         /* 顶部工具栏 */
         .top-bar {
             height: 56px;
+            flex-shrink: 0;
             background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
             border-bottom: 1px solid #e8e8e8;
             display: flex;
@@ -29,7 +30,6 @@
             padding: 0 24px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
             position: relative;
-            contain: layout paint;
         }
 
         .top-actions {
@@ -74,7 +74,6 @@
             overflow-y: auto;
             background-color: #e8e8e8;
             padding: 24px 0;
-            height: calc(100vh - 56px);
         }
 
         /* A4 纸张 */
