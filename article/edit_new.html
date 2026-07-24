@@ -190,12 +190,19 @@
         .scrollbar-slim::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 3px; }
         .scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
 
-        /* 文件名显示 */
-        .file-name-display {
+        /* 工具栏左侧信息 */
+        .toolbar-left-info {
             position: absolute;
             left: 24px;
             top: 50%;
             transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: calc(100% - 48px);
+        }
+
+        .file-name-display {
             font-weight: 700;
             color: #1f2937;
             font-size: 15px;
@@ -208,6 +215,13 @@
 
         .file-name-display.hidden {
             display: none;
+        }
+
+        .count-display {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            white-space: nowrap;
         }
 
         /* 对话框样式 */
@@ -318,7 +332,10 @@
 </head>
 <body>
     <div class="top-bar">
-        <span class="file-name-display hidden" id="fileNameDisplay"></span>
+        <div class="toolbar-left-info">
+            <span class="file-name-display hidden" id="fileNameDisplay"></span>
+            <span class="count-display" id="countDisplay">0</span>
+        </div>
         <div class="top-actions">
             <button class="action-btn" id="matchBtn">
                 <i class="fa fa-magic"></i>
@@ -393,11 +410,24 @@
         const keyCancelBtn = document.getElementById('keyCancelBtn');
         const showKeyCheckbox = document.getElementById('showKeyCheckbox');
         const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const countDisplay = document.getElementById('countDisplay');
         const documentContent = document.querySelector('.document-content');
 
         // 状态变量
         let currentKey = localStorage.getItem('editorKey') || '';
         let currentFileName = '';
+
+        function getTextLength(text) {
+            return text ? text.replace(/\s/g, '').length : 0;
+        }
+
+        function updateCountDisplay() {
+            const selectionText = window.getSelection ? window.getSelection().toString() : '';
+            const totalLength = getTextLength(documentContent.textContent || '');
+            const hasSelection = selectionText && selectionText.trim();
+            const selectedLength = hasSelection ? getTextLength(selectionText) : 0;
+            countDisplay.textContent = `字数: ${totalLength} | 已选: ${selectedLength}`
+        }
 
         // 打开匹配对话框
         function openMatchDialog() {
@@ -471,6 +501,8 @@
                 } else {
                     documentContent.textContent = content;
                 }
+
+                updateCountDisplay();
 
                 // 更新文件名显示
                 currentFileName = foundFileName;
@@ -623,6 +655,13 @@
             }
         });
 
+        documentContent.addEventListener('input', updateCountDisplay);
+        documentContent.addEventListener('keyup', updateCountDisplay);
+        documentContent.addEventListener('mouseup', updateCountDisplay);
+        documentContent.addEventListener('keyup', updateCountDisplay);
+        document.addEventListener('selectionchange', updateCountDisplay);
+        documentContent.addEventListener('focus', updateCountDisplay);
+
         // 处理 contenteditable 回车键，插入 <br> 而不是 <div>
         documentContent.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -630,6 +669,8 @@
                 document.execCommand('insertLineBreak');
             }
         });
+
+        updateCountDisplay();
     </script>
 </body>
 </html>
