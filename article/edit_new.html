@@ -353,10 +353,6 @@
                 <i class="fa fa-download"></i>
                 <span>下载</span>
             </button>
-            <button class="action-btn" id="toolsBtn">
-                <i class="fa fa-wrench"></i>
-                <span>工具</span>
-            </button>
         </div>
     </div>
 
@@ -374,18 +370,6 @@
             <div class="dialog-buttons">
                 <button class="dialog-btn secondary" id="matchCancelBtn">取消</button>
                 <button class="dialog-btn primary" id="matchConfirmBtn">确定</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 工具对话框 -->
-    <div class="dialog-overlay hidden" id="toolsDialog">
-        <div class="dialog-box">
-            <div class="dialog-title">工具</div>
-            <div class="dialog-buttons" style="justify-content: flex-start; flex-direction: column; align-items: stretch; gap: 10px;">
-                <button class="action-btn" id="wordCountToggleBtn">
-                    <i class="fa fa-bar-chart" style="margin-right: 6px;"></i>开启字数统计
-                </button>
             </div>
         </div>
     </div>
@@ -428,47 +412,11 @@
         const fileNameDisplay = document.getElementById('fileNameDisplay');
         const countDisplay = document.getElementById('countDisplay');
         const documentContent = document.querySelector('.document-content');
-        const toolsBtn = document.getElementById('toolsBtn');
-        const toolsDialog = document.getElementById('toolsDialog');
-        const wordCountToggleBtn = document.getElementById('wordCountToggleBtn');
 
         // 状态变量
         let currentKey = localStorage.getItem('editorKey') || '';
         let currentFileName = '';
-        let wordCountEnabled = localStorage.getItem('wordCountEnabled') === 'true';
-
-        // 打开工具对话框
-        function openToolsDialog() {
-            updateWordCountBtnText();
-            toolsDialog.classList.remove('hidden');
-        }
- 
-        // 关闭工具对话框
-        function closeToolsDialog() {
-            toolsDialog.classList.add('hidden');
-        }
- 
-        // 更新字数统计按钮文字
-        function updateWordCountBtnText() {
-            if (wordCountEnabled) {
-                wordCountToggleBtn.innerHTML = '<i class="fa fa-bar-chart" style="margin-right: 6px;"></i>关闭字数统计';
-            } else {
-                wordCountToggleBtn.innerHTML = '<i class="fa fa-bar-chart" style="margin-right: 6px;"></i>开启字数统计';
-            }
-        }
- 
-        // 切换字数统计
-        function toggleWordCount() {
-            wordCountEnabled = !wordCountEnabled;
-            localStorage.setItem('wordCountEnabled', wordCountEnabled);
-            if (wordCountEnabled) {
-                countDisplay.style.display = '';
-                updateCountDisplay();
-            } else {
-                countDisplay.style.display = 'none';
-            }
-            updateWordCountBtnText();
-        }
+        let countUpdateFrame = null;
 
         function getTextLength(text) {
             return text ? text.replace(/\s/g, '').length : 0;
@@ -479,7 +427,18 @@
             const totalLength = getTextLength(documentContent.textContent || '');
             const hasSelection = selectionText && selectionText.trim();
             const selectedLength = hasSelection ? getTextLength(selectionText) : 0;
-            countDisplay.textContent = `字数: ${totalLength} | 已选: ${selectedLength}`
+            countDisplay.textContent = `字数: ${totalLength} | 已选: ${selectedLength}`;
+        }
+
+        function scheduleCountUpdate() {
+            if (countUpdateFrame !== null) {
+                return;
+            }
+
+            countUpdateFrame = requestAnimationFrame(() => {
+                countUpdateFrame = null;
+                updateCountDisplay();
+            });
         }
 
         // 打开匹配对话框
@@ -648,19 +607,6 @@
             URL.revokeObjectURL(a.href);
         });
 
-        // 工具按钮事件
-        toolsBtn.addEventListener('click', openToolsDialog);
- 
-        // 字数统计开关按钮
-        wordCountToggleBtn.addEventListener('click', toggleWordCount);
- 
-        // 点击工具对话框背景关闭
-        toolsDialog.addEventListener('click', (e) => {
-            if (e.target === toolsDialog) {
-                closeToolsDialog();
-            }
-        });
-
         // 匹配按钮事件
         matchBtn.addEventListener('click', openMatchDialog);
 
@@ -721,20 +667,12 @@
             }
         });
 
-        documentContent.addEventListener('input', updateCountDisplay);
-        documentContent.addEventListener('keyup', updateCountDisplay);
-        documentContent.addEventListener('mouseup', updateCountDisplay);
-        documentContent.addEventListener('keyup', updateCountDisplay);
-        document.addEventListener('selectionchange', updateCountDisplay);
-        documentContent.addEventListener('focus', updateCountDisplay);
+        documentContent.addEventListener('input', scheduleCountUpdate);
+        documentContent.addEventListener('keyup', scheduleCountUpdate);
+        documentContent.addEventListener('mouseup', scheduleCountUpdate);
+        document.addEventListener('selectionchange', scheduleCountUpdate);
+        documentContent.addEventListener('focus', scheduleCountUpdate);
 
-        // 初始化字数统计显示状态
-        if (!wordCountEnabled) {
-            countDisplay.style.display = 'none';
-        } else {
-            updateCountDisplay();
-        }
-        
         // 处理 contenteditable 回车键，插入 <br> 而不是 <div>
         documentContent.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
