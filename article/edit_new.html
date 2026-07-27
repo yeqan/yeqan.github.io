@@ -353,6 +353,10 @@
                 <i class="fa fa-download"></i>
                 <span>下载</span>
             </button>
+            <button class="action-btn" id="toolsBtn">
+                <i class="fa fa-wrench"></i>
+                <span>工具</span>
+            </button>
         </div>
     </div>
 
@@ -393,6 +397,19 @@
         </div>
     </div>
 
+    <!-- 工具对话框 -->
+    <div class="dialog-overlay hidden" id="toolsDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">工具</div>
+            <div class="dialog-buttons" style="justify-content: flex-start; flex-direction: column; align-items: stretch; gap: 10px;">
+                <button class="action-btn" id="wordCountToggleBtn" type="button">
+                    <i class="fa fa-bar-chart"></i>
+                    <span>隐藏统计字数</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // DOM 元素引用
         const matchBtn = document.getElementById('matchBtn');
@@ -412,14 +429,42 @@
         const fileNameDisplay = document.getElementById('fileNameDisplay');
         const countDisplay = document.getElementById('countDisplay');
         const documentContent = document.querySelector('.document-content');
+        const toolsBtn = document.getElementById('toolsBtn');
+        const toolsDialog = document.getElementById('toolsDialog');
+        const wordCountToggleBtn = document.getElementById('wordCountToggleBtn');
 
         // 状态变量
         let currentKey = localStorage.getItem('editorKey') || '';
         let currentFileName = '';
         let countUpdateFrame = null;
+        let wordCountVisible = true;
 
         function getTextLength(text) {
             return text ? text.replace(/\s/g, '').length : 0;
+        }
+
+        function updateWordCountButtonText() {
+            const label = wordCountVisible ? '隐藏统计字数' : '显示统计字数';
+            const icon = wordCountVisible ? 'fa-eye-slash' : 'fa-eye';
+            wordCountToggleBtn.innerHTML = `<i class="fa ${icon}"></i><span>${label}</span>`;
+        }
+
+        function toggleWordCount() {
+            wordCountVisible = !wordCountVisible;
+            countDisplay.style.display = wordCountVisible ? '' : 'none';
+            if (wordCountVisible) {
+                updateCountDisplay();
+            }
+            updateWordCountButtonText();
+        }
+
+        function openToolsDialog() {
+            updateWordCountButtonText();
+            toolsDialog.classList.remove('hidden');
+        }
+
+        function closeToolsDialog() {
+            toolsDialog.classList.add('hidden');
         }
 
         function updateCountDisplay() {
@@ -607,6 +652,22 @@
             URL.revokeObjectURL(a.href);
         });
 
+        // 工具按钮事件
+        toolsBtn.addEventListener('click', openToolsDialog);
+
+        // 字数统计开关按钮
+        wordCountToggleBtn.addEventListener('click', () => {
+            toggleWordCount();
+            closeToolsDialog();
+        });
+
+        // 点击工具对话框背景关闭
+        toolsDialog.addEventListener('click', (e) => {
+            if (e.target === toolsDialog) {
+                closeToolsDialog();
+            }
+        });
+
         // 匹配按钮事件
         matchBtn.addEventListener('click', openMatchDialog);
 
@@ -672,6 +733,11 @@
         documentContent.addEventListener('mouseup', scheduleCountUpdate);
         document.addEventListener('selectionchange', scheduleCountUpdate);
         documentContent.addEventListener('focus', scheduleCountUpdate);
+
+        // 初始化字数统计显示状态
+        countDisplay.style.display = '';
+        updateWordCountButtonText();
+        updateCountDisplay();
 
         // 处理 contenteditable 回车键，插入 <br> 而不是 <div>
         documentContent.addEventListener('keydown', (e) => {
