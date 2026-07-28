@@ -5,374 +5,749 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDIT</title>
     <script src="../js/crypto-js.min.js"></script>
-    <!-- 引入Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入Font Awesome图标 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- 配置Tailwind自定义样式 -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#165DFF',
-                        editor: '#F9FAFB',
-                        // 夜间模式颜色
-                        dark: {
-                            bg: '#1E1E2E',
-                            card: '#2D2D3F',
-                            text: '#E2E8F0',
-                            border: '#404059',
-                            editor: '#282838',
-                            hover: '#383850'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['Consolas', 'Monaco', 'monospace'],
-                    },
-                }
-            }
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-    </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .editor-height {
-                height: calc(100vh - 140px);
-                min-height: 400px;
-            }
-            .scrollbar-slim::-webkit-scrollbar {
-                width: 4px;
-                height: 4px;
-            }
-            .scrollbar-slim::-webkit-scrollbar-thumb {
-                background-color: rgba(156, 163, 175, 0.5);
-                border-radius: 2px;
-            }
-            .scrollbar-slim::-webkit-scrollbar-track {
-                background: transparent;
-            }
-            /* 夜间模式滚动条 */
-            .dark .scrollbar-slim::-webkit-scrollbar-thumb {
-                background-color: rgba(100, 116, 139, 0.5);
-            }
+
+        /* 顶部工具栏 */
+        .top-bar {
+            height: 56px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 24px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            position: relative;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 按钮样式 */
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            font-size: 13px;
+            color: #555;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .action-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #d0d0d0;
+        }
+
+        .action-btn:focus {
+            outline: none;
+            background-color: #fff;
+            border-color: #e0e0e0;
+        }
+
+        .action-btn:active {
+            background-color: #ebebeb;
+        }
+
+        /* 编辑区 */
+        .editor-area {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #e8e8e8;
+            padding: 24px 0;
+        }
+
+        /* A4 纸张 */
+        .document-paper {
+            width: 794px;
+            min-height: 1122px;
+            background-color: #fff;
+            margin: 0 auto;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
+            outline: none;
+            contain: layout paint;
+        }
+
+        .document-paper:focus { outline: none; }
+
+        .document-content {
+            min-height: 1122px;
+            padding: 60px 48px;
+            word-break: break-word;
+            outline: none;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .document-content p, .document-content div {
+            margin: 0;
+            line-height: 1.6;
+            text-indent: 2em;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .document-content h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #165DFF;
+        }
+
+        .document-content h2 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 16px 0 10px 0;
+        }
+
+        .document-content h3 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 14px 0 8px 0;
+        }
+
+        .document-content ul, .document-content ol {
+            margin: 8px 0 8px 24px;
+            line-height: 1.8;
+        }
+
+        .document-content li {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .document-content blockquote {
+            border-left: 4px solid #165DFF;
+            margin: 12px 0;
+            color: #666;
+            font-style: italic;
+            background-color: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .document-content code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        .document-content hr {
+            border: none;
+            border-top: 1px dashed #d1d5db;
+            margin: 24px 0;
+        }
+
+        .document-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+
+        .document-content th, .document-content td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .document-content th {
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 自定义滚动条 */
+        .scrollbar-slim::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-slim::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 3px; }
+        .scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
+
+        /* 工具栏左侧信息 */
+        .toolbar-left-info {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: calc(100% - 48px);
+        }
+
+        .file-name-display {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 15px;
+            letter-spacing: 0.2px;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-name-display.hidden {
+            display: none;
+        }
+
+        .count-display {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        /* 对话框样式 */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .dialog-overlay.hidden {
+            display: none;
+        }
+
+        .dialog-box {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .dialog-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .dialog-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .dialog-input:focus {
+            border-color: #165DFF;
+            box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
+        }
+
+        .dialog-checkbox-group {
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .dialog-checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .dialog-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .dialog-btn.primary {
+            background-color: #165DFF;
+            color: #fff;
+        }
+
+        .dialog-btn.primary:hover {
+            background-color: #0052cc;
+        }
+
+        .dialog-btn.danger {
+            background-color: #ff4d4f;
+            color: #fff;
+        }
+
+        .dialog-btn.danger:hover {
+            background-color: #ff7875;
+        }
+
+        .dialog-btn.secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .dialog-btn.secondary:hover {
+            background-color: #e0e0e0;
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800 antialiased transition-colors duration-300" id="appBody">
-    <!-- 顶部导航栏 -->
-    <header class="bg-white shadow-sm sticky top-0 z-10 transition-colors duration-300" id="header">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <h1 class="text-xl font-bold text-gray-800 transition-colors duration-300" id="headerTitle">EDIT</h1>
-            </div>
-            <div class="flex items-center gap-3">
-                <!-- 夜间模式切换按钮 -->
-                <button id="themeToggleBtn"
-                    class="flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
-                    <span class="hidden sm:inline" id="themeText">夜间模式</span>
-                    <i class="fa fa-moon-o" id="themeIcon"></i>
-                </button>
-                <button id="saveBtn"
-                    class="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
-                    <span class="hidden sm:inline">保存</span>
-                    <i class="fa fa-save"></i>
-                </button>
-                <button id="copyBtn"
-                    class="flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors" id="copyBtnEl">
-                    <span class="hidden sm:inline">复制</span>
-                    <i class="fa fa-copy"></i>
-                </button>
-            </div>
+<body>
+    <div class="top-bar">
+        <div class="toolbar-left-info">
+            <span class="file-name-display hidden" id="fileNameDisplay"></span>
+            <span class="count-display" id="countDisplay">0</span>
         </div>
-    </header>
+        <div class="top-actions">
+            <button class="action-btn" id="matchBtn">
+                <i class="fa fa-magic"></i>
+                <span>匹配</span>
+            </button>
+            <button class="action-btn" id="keyManageBtn">
+                <i class="fa fa-key"></i>
+                <span>密钥</span>
+            </button>
+            <button class="action-btn" id="copyBtn">
+                <i class="fa fa-copy"></i>
+                <span>复制</span>
+            </button>
+            <button class="action-btn" id="downloadBtn">
+                <i class="fa fa-download"></i>
+                <span>下载</span>
+            </button>
+            <button class="action-btn" id="toolsBtn">
+                <i class="fa fa-wrench"></i>
+                <span>工具</span>
+            </button>
+        </div>
+    </div>
 
-    <!-- 主内容区 -->
-    <main class="container mx-auto px-4 py-6 transition-colors duration-300" id="mainContent">
-        <!-- 编辑区 -->
-        <div class="bg-editor rounded-lg shadow-sm overflow-hidden transition-colors duration-300" id="editorContainer">
-            <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center transition-colors duration-300" id="editorHeader">
-                <span class="text-sm font-medium text-gray-600 transition-colors duration-300" id="editorLabel">编辑区</span>
-                <span class="text-xs text-gray-500 transition-colors duration-300" id="countDisplay">字数：0 | 选中：0</span>
-            </div>
-            <textarea id="editor"
-                class="w-full editor-height p-4 font-mono text-sm bg-editor scrollbar-slim outline-none resize-none transition-colors duration-300"></textarea>
+    <div class="editor-area scrollbar-slim">
+        <div class="document-paper">
+            <div class="document-content" contenteditable="plaintext-only" spellcheck="false"></div>
         </div>
-    </main>
+    </div>
+
+    <!-- 匹配对话框 -->
+    <div class="dialog-overlay hidden" id="matchDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">匹配文件</div>
+            <input type="text" class="dialog-input" id="matchInput" placeholder="输入文件名（不含后缀）">
+            <div class="dialog-buttons">
+                <button class="dialog-btn secondary" id="matchCancelBtn">取消</button>
+                <button class="dialog-btn primary" id="matchConfirmBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 密钥管理对话框 -->
+    <div class="dialog-overlay hidden" id="keyDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">密钥管理</div>
+            <input type="password" class="dialog-input" id="keyInput" placeholder="输入密钥">
+            <div class="dialog-checkbox-group">
+                <label>
+                    <input type="checkbox" id="showKeyCheckbox">
+                    <span>显示密钥</span>
+                </label>
+            </div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn secondary" id="keyCancelBtn">取消</button>
+                <button class="dialog-btn danger" id="keyClearBtn">清除</button>
+                <button class="dialog-btn primary" id="keyConfirmBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具对话框 -->
+    <div class="dialog-overlay hidden" id="toolsDialog">
+        <div class="dialog-box">
+            <div class="dialog-title">工具</div>
+            <div class="dialog-buttons" style="justify-content: flex-start; flex-direction: column; align-items: stretch; gap: 10px;">
+                <button class="action-btn" id="wordCountToggleBtn" type="button">
+                    <i class="fa fa-bar-chart"></i>
+                    <span>隐藏统计字数</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // 获取DOM元素
-        const editor = document.getElementById('editor');
-        const saveBtn = document.getElementById('saveBtn');
+        // DOM 元素引用
+        const matchBtn = document.getElementById('matchBtn');
+        const keyManageBtn = document.getElementById('keyManageBtn');
         const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const matchDialog = document.getElementById('matchDialog');
+        const matchInput = document.getElementById('matchInput');
+        const matchConfirmBtn = document.getElementById('matchConfirmBtn');
+        const matchCancelBtn = document.getElementById('matchCancelBtn');
+        const keyDialog = document.getElementById('keyDialog');
+        const keyInput = document.getElementById('keyInput');
+        const keyConfirmBtn = document.getElementById('keyConfirmBtn');
+        const keyClearBtn = document.getElementById('keyClearBtn');
+        const keyCancelBtn = document.getElementById('keyCancelBtn');
+        const showKeyCheckbox = document.getElementById('showKeyCheckbox');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
         const countDisplay = document.getElementById('countDisplay');
-        // 夜间模式相关DOM元素
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const appBody = document.getElementById('appBody');
-        const header = document.getElementById('header');
-        const headerTitle = document.getElementById('headerTitle');
-        const mainContent = document.getElementById('mainContent');
-        const editorContainer = document.getElementById('editorContainer');
-        const editorHeader = document.getElementById('editorHeader');
-        const editorLabel = document.getElementById('editorLabel');
-        const themeText = document.getElementById('themeText');
-        const themeIcon = document.getElementById('themeIcon');
-        const copyBtnEl = document.getElementById('copyBtnEl');
-        
-        // 获取URL参数
-        const params = new URLSearchParams(window.location.search);
-        const deckey = params.get('deckey');
-        const enckey = params.get('enckey');
-        const path = params.get('path');
-        const font = params.get('font');
+        const documentContent = document.querySelector('.document-content');
+        const toolsBtn = document.getElementById('toolsBtn');
+        const toolsDialog = document.getElementById('toolsDialog');
+        const wordCountToggleBtn = document.getElementById('wordCountToggleBtn');
 
-        // 动态设置编辑区字体
-        if (font) {
-            // 兼容字体名称格式，保留原有降级字体
-            const fontFamilies = [
-                decodeURIComponent(font), // 解码URL中的字体名称（处理空格转义）
-                'Consolas', 
-                'Monaco', 
-                'monospace'
-            ].join(', ');
-            editor.style.fontFamily = fontFamilies;
+        // 状态变量
+        let currentKey = localStorage.getItem('editorKey') || '';
+        let currentFileName = '';
+        let countUpdateFrame = null;
+        let wordCountVisible = true;
+
+        function getTextLength(text) {
+            return text ? text.replace(/\s/g, '').length : 0;
         }
 
-        // 存储总字数和选中字数的状态
-        let totalWordCount = 0;
-        let selectedWordCount = 0;
-        // 存储夜间模式状态
-        let isDarkMode = false;
+        function updateWordCountButtonText() {
+            const label = wordCountVisible ? '隐藏统计字数' : '显示统计字数';
+            const icon = wordCountVisible ? 'fa-eye-slash' : 'fa-eye';
+            wordCountToggleBtn.innerHTML = `<i class="fa ${icon}"></i><span>${label}</span>`;
+        }
 
-        let lastCountText = ''; // 缓存上次的显示文本
-        function renderCountDisplay() {
-            const newText = `字数：${totalWordCount} | 选中：${selectedWordCount}`;
-            if (newText !== lastCountText) { // 仅数值变化时更新DOM
-                countDisplay.textContent = newText;
-                lastCountText = newText;
+        function toggleWordCount() {
+            wordCountVisible = !wordCountVisible;
+            countDisplay.style.display = wordCountVisible ? '' : 'none';
+            if (wordCountVisible) {
+                updateCountDisplay();
             }
+            updateWordCountButtonText();
         }
 
-        // 防抖函数
-        function debounce(fn, delay = 100) {
-            let timer = null;
-            return function(...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
-            };
+        function openToolsDialog() {
+            updateWordCountButtonText();
+            toolsDialog.classList.remove('hidden');
         }
 
-        // 选中字数统计函数
-        function updateSelectedWordCount() {
-            // 仅在编辑区有焦点时统计选中字数
-            if (document.activeElement !== editor) {
-                selectedWordCount = 0;
-                renderCountDisplay();
-                return;
-            }
-            // 获取选中文本并去除首尾空白符
-            const selection = window.getSelection();
-            const selectedText = selection.toString().trim();
-            // 更新选中字数状态
-            selectedWordCount = selectedText.length;
-            // 重新渲染显示
-            renderCountDisplay();
+        function closeToolsDialog() {
+            toolsDialog.classList.add('hidden');
         }
 
-        // 字数统计（防抖100ms，避开拼音输入的高频触发）
-        const debouncedInputHandler = debounce(function() {
-            // 更新总字数状态
-            totalWordCount = this.value.length;
-            // 输入时重置选中字数（输入会取消选中状态）
-            selectedWordCount = 0;
-            // 更新显示
-            renderCountDisplay();
-        }, 100);
-        editor.addEventListener('input', debouncedInputHandler);
+        function updateCountDisplay() {
+            const selectionText = window.getSelection ? window.getSelection().toString() : '';
+            const totalLength = getTextLength(documentContent.textContent || '');
+            const hasSelection = selectionText && selectionText.trim();
+            const selectedLength = hasSelection ? getTextLength(selectionText) : 0;
+            countDisplay.textContent = `字数: ${totalLength} | 已选: ${selectedLength}`;
+        }
 
-        const debouncedSelectionUpdate = debounce(updateSelectedWordCount, 50);
-        // 鼠标松开时（鼠标选择文本结束）
-        editor.addEventListener('mouseup', debouncedSelectionUpdate);
-        // 键盘操作时（如shift+箭头选择、ctrl+a全选）
-        editor.addEventListener('keyup', function(e) {
-            // 监听方向键、shift、ctrl/meta（mac）键操作
-            if (['Shift', 'Control', 'Meta', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a'].includes(e.key)) {
-                debouncedSelectionUpdate();
-            }
-        });
-        // 全局选区变化监听（兼容更多选择场景）
-        document.addEventListener('selectionchange', debouncedSelectionUpdate);
-
-        // 保存文件
-        saveBtn.addEventListener('click', function () {
-            if (!editor.value.trim()) {
-                alert('请输入内容后再保存！');
+        function scheduleCountUpdate() {
+            if (countUpdateFrame !== null) {
                 return;
             }
 
-            // 加密处理
-            const editValue = enckey 
-                ? CryptoJS.DES.encrypt(editor.value, enckey).toString()
-                : editor.value;
+            countUpdateFrame = requestAnimationFrame(() => {
+                countUpdateFrame = null;
+                updateCountDisplay();
+            });
+        }
 
-            // 创建并下载文件
-            const blob = new Blob([editValue], { type: 'text/plain;charset=utf-8' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            if(path != null) {
-                a.download = `${path}.txt`;
-            } else {
-                a.download = `text_${new Date().getTime()}.txt`;
+        // 打开匹配对话框
+        function openMatchDialog() {
+            matchInput.value = '';
+            matchDialog.classList.remove('hidden');
+            matchInput.focus();
+        }
+
+        // 关闭匹配对话框
+        function closeMatchDialog() {
+            matchDialog.classList.add('hidden');
+        }
+
+        // 打开密钥管理对话框
+        function openKeyDialog() {
+            keyInput.value = currentKey;
+            keyInput.type = 'password';
+            showKeyCheckbox.checked = false;
+            keyDialog.classList.remove('hidden');
+            keyInput.focus();
+        }
+
+        // 关闭密钥管理对话框
+        function closeKeyDialog() {
+            keyDialog.classList.add('hidden');
+            keyInput.value = '';
+        }
+
+        // 处理匹配文件
+        async function handleMatch(fileName) {
+            try {
+                // 尝试查找匹配的文件（不考虑后缀名）
+                const possibleFiles = [
+                    `${fileName}.html`,
+                    `${fileName}.txt`,
+                    `${fileName}.md`,
+                    `${fileName}`,
+                ];
+
+                let content = null;
+                let foundFileName = '';
+
+                for (const file of possibleFiles) {
+                    try {
+                        const response = await fetch(file);
+                        if (response.ok) {
+                            content = await response.text();
+                            foundFileName = fileName;
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+
+                if (content === null) {
+                    alert('未找到匹配的文件！');
+                    return;
+                }
+
+                // 如果有密钥且内容不为空，则解密
+                if (currentKey && content.trim()) {
+                    try {
+                        const decrypted = CryptoJS.DES.decrypt(content, currentKey).toString(CryptoJS.enc.Utf8);
+                        documentContent.textContent = decrypted;
+                    } catch (e) {
+                        alert('解密失败，请检查密钥是否正确！');
+                        console.error('解密错误:', e);
+                        return;
+                    }
+                } else {
+                    documentContent.textContent = content;
+                }
+
+                updateCountDisplay();
+
+                // 更新文件名显示
+                currentFileName = foundFileName;
+                fileNameDisplay.textContent = foundFileName;
+                fileNameDisplay.classList.remove('hidden');
+
+                alert('匹配成功！');
+                closeMatchDialog();
+            } catch (error) {
+                alert('匹配失败：' + error.message);
+                console.error('匹配错误:', error);
             }
-            
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(a.href);
-        });
+        }
 
-        // 复制文本
-        copyBtn.addEventListener('click', async function () {
-            // 检查编辑区是否有内容
-            if (!editor.value.trim()) {
-                alert('请输入内容后再复制！');
+        // 处理密钥保存
+        function handleKeySave(newKey) {
+            if (!newKey || newKey.trim() === '') {
+                alert('密钥不能为空！');
+                return;
+            }
+            currentKey = newKey;
+            localStorage.setItem('editorKey', newKey);
+            alert('密钥已保存！');
+            closeKeyDialog();
+        }
+
+        // 处理密钥清除
+        function handleKeyClear() {
+            if (confirm('确定要清除密钥吗？')) {
+                currentKey = '';
+                localStorage.removeItem('editorKey');
+                alert('密钥已清除！');
+                closeKeyDialog();
+            }
+        }
+
+        // 复制功能
+        copyBtn.addEventListener('click', async () => {
+            const content = documentContent.innerText;
+            if (!content.trim()) {
+                alert('编辑区内容为空！');
                 return;
             }
 
-            // 根据enckey判断是否加密后再复制
-            const copyContent = enckey 
-                ? CryptoJS.DES.encrypt(editor.value, enckey).toString()  // 加密后复制
-                : editor.value;  // 复制原始内容
+            // 如果有密钥，则加密后复制
+            const copyContent = currentKey
+                ? CryptoJS.DES.encrypt(content, currentKey).toString()
+                : content;
 
             try {
-                // 将内容复制到剪贴板
                 await navigator.clipboard.writeText(copyContent);
-                // 提示区分加密/未加密复制
                 alert('复制成功！');
             } catch (error) {
-                // 兼容备用方案（如果剪贴板API失败）
-                console.error('剪贴板复制失败:', error);
-                // 手动创建textarea复制
+                // 备用方案
                 const tempTextarea = document.createElement('textarea');
                 tempTextarea.value = copyContent;
                 document.body.appendChild(tempTextarea);
                 tempTextarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(tempTextarea);
-                
-                // 再次检查是否复制成功并提示
-                const isSuccess = document.execCommand('copy');
-                if (isSuccess) {
-                    alert('复制成功！');
-                } else {
-                    alert('复制失败，请手动复制内容');
-                }
+                alert('复制成功！');
             }
         });
 
-        // 初始化加载文件
-        window.addEventListener('DOMContentLoaded', function () {
-            if (path) {
-                fetch(`${path}.html`)
-                    .then(response => {
-                        if (!response.ok) throw new Error("无法加载文件");
-                        return response.text();
-                    })
-                    .then(html => {
-                        // 解密处理
-                        editor.value = deckey 
-                            ? CryptoJS.DES.decrypt(html, deckey).toString(CryptoJS.enc.Utf8)
-                            : html;
-                        // 更新总字数状态
-                        totalWordCount = editor.value.trim().length;
-                        // 初始化显示
-                        renderCountDisplay();
-                    })
-                    .catch(error => console.error("加载失败：", error));
+        // 下载功能
+        downloadBtn.addEventListener('click', () => {
+            const content = documentContent.innerText;
+            if (!content.trim()) {
+                alert('编辑区内容为空！');
+                return;
             }
-            updateSelectedWordCount();
-            
-            // 检查本地存储的主题偏好
-            const savedTheme = localStorage.getItem('editorTheme');
-            if (savedTheme === 'dark') {
-                toggleDarkMode(true);
-            }
-        });
 
-        // 切换夜间模式函数
-        function toggleDarkMode(forceDark = null) {
-            // 确定当前模式
-            isDarkMode = forceDark !== null ? forceDark : !isDarkMode;
+            // 如果有密钥，则加密后下载
+            const downloadContent = currentKey
+                ? CryptoJS.DES.encrypt(content, currentKey).toString()
+                : content;
+
+            const blob = new Blob([downloadContent], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
             
-            // 更新DOM样式
-            if (isDarkMode) {
-                // 夜间模式样式
-                appBody.classList.remove('bg-gray-50', 'text-gray-800');
-                appBody.classList.add('bg-dark-bg', 'text-dark-text');
-                header.classList.remove('bg-white', 'shadow-sm');
-                header.classList.add('bg-dark-card', 'shadow-none', 'border-b', 'border-dark-border');
-                headerTitle.classList.remove('text-gray-800');
-                headerTitle.classList.add('text-dark-text');
-                mainContent.classList.remove('text-gray-800');
-                mainContent.classList.add('text-dark-text');
-                editorContainer.classList.remove('bg-editor', 'shadow-sm');
-                editorContainer.classList.add('bg-dark-card', 'shadow-none');
-                editorHeader.classList.remove('bg-gray-100', 'border-gray-200');
-                editorHeader.classList.add('bg-dark-bg', 'border-dark-border');
-                editorLabel.classList.remove('text-gray-600');
-                editorLabel.classList.add('text-dark-text');
-                countDisplay.classList.remove('text-gray-500');
-                countDisplay.classList.add('text-dark-text/80');
-                editor.classList.remove('bg-editor', 'text-sm');
-                editor.classList.add('bg-dark-editor', 'text-dark-text', 'placeholder:text-dark-text/50');
-                copyBtnEl.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                copyBtnEl.classList.add('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
-                themeToggleBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                themeToggleBtn.classList.add('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
-                
-                // 更新按钮文本和图标
-                themeText.textContent = '日间模式';
-                themeIcon.classList.remove('fa-moon-o');
-                themeIcon.classList.add('fa-sun-o');
+            // 根据文件名或时间戳生成下载文件名
+            if (currentFileName) {
+                a.download = `${currentFileName}.txt`;
             } else {
-                // 日间模式样式（恢复默认）
-                appBody.classList.add('bg-gray-50', 'text-gray-800');
-                appBody.classList.remove('bg-dark-bg', 'text-dark-text');
-                header.classList.add('bg-white', 'shadow-sm');
-                header.classList.remove('bg-dark-card', 'shadow-none', 'border-b', 'border-dark-border');
-                headerTitle.classList.add('text-gray-800');
-                headerTitle.classList.remove('text-dark-text');
-                mainContent.classList.add('text-gray-800');
-                mainContent.classList.remove('text-dark-text');
-                editorContainer.classList.add('bg-editor', 'shadow-sm');
-                editorContainer.classList.remove('bg-dark-card', 'shadow-none');
-                editorHeader.classList.add('bg-gray-100', 'border-gray-200');
-                editorHeader.classList.remove('bg-dark-bg', 'border-dark-border');
-                editorLabel.classList.add('text-gray-600');
-                editorLabel.classList.remove('text-dark-text');
-                countDisplay.classList.add('text-gray-500');
-                countDisplay.classList.remove('text-dark-text/80');
-                editor.classList.add('bg-editor', 'text-sm');
-                editor.classList.remove('bg-dark-editor', 'text-dark-text', 'placeholder:text-dark-text/50');
-                copyBtnEl.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                copyBtnEl.classList.remove('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
-                themeToggleBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                themeToggleBtn.classList.remove('bg-dark-hover', 'text-dark-text', 'hover:bg-dark-card');
-                
-                // 更新按钮文本和图标
-                themeText.textContent = '夜间模式';
-                themeIcon.classList.add('fa-moon-o');
-                themeIcon.classList.remove('fa-sun-o');
+                a.download = `document_${Date.now()}.txt`;
             }
             
-            // 保存主题偏好到本地存储
-            localStorage.setItem('editorTheme', isDarkMode ? 'dark' : 'light');
-        }
-
-        // 绑定主题切换按钮事件
-        themeToggleBtn.addEventListener('click', function() {
-            toggleDarkMode();
+            a.click();
+            URL.revokeObjectURL(a.href);
         });
+
+        // 工具按钮事件
+        toolsBtn.addEventListener('click', openToolsDialog);
+
+        // 字数统计开关按钮
+        wordCountToggleBtn.addEventListener('click', () => {
+            toggleWordCount();
+            closeToolsDialog();
+        });
+
+        // 点击工具对话框背景关闭
+        toolsDialog.addEventListener('click', (e) => {
+            if (e.target === toolsDialog) {
+                closeToolsDialog();
+            }
+        });
+
+        // 匹配按钮事件
+        matchBtn.addEventListener('click', openMatchDialog);
+
+        // 匹配对话框按钮事件
+        matchConfirmBtn.addEventListener('click', () => {
+            const fileName = matchInput.value.trim();
+            if (!fileName) {
+                alert('请输入文件名！');
+                return;
+            }
+            handleMatch(fileName);
+        });
+
+        matchCancelBtn.addEventListener('click', closeMatchDialog);
+
+        // 匹配输入框Enter键确认
+        matchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                matchConfirmBtn.click();
+            }
+        });
+
+        // 密钥管理按钮事件
+        keyManageBtn.addEventListener('click', openKeyDialog);
+
+        // 密钥对话框按钮事件
+        keyConfirmBtn.addEventListener('click', () => {
+            const newKey = keyInput.value.trim();
+            handleKeySave(newKey);
+        });
+
+        keyClearBtn.addEventListener('click', handleKeyClear);
+
+        keyCancelBtn.addEventListener('click', closeKeyDialog);
+
+        // 显示/隐藏密钥复选框
+        showKeyCheckbox.addEventListener('change', () => {
+            keyInput.type = showKeyCheckbox.checked ? 'text' : 'password';
+        });
+
+        // 密钥输入框Enter键确认
+        keyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                keyConfirmBtn.click();
+            }
+        });
+
+        // 点击对话框背景关闭
+        matchDialog.addEventListener('click', (e) => {
+            if (e.target === matchDialog) {
+                closeMatchDialog();
+            }
+        });
+
+        keyDialog.addEventListener('click', (e) => {
+            if (e.target === keyDialog) {
+                closeKeyDialog();
+            }
+        });
+
+        documentContent.addEventListener('input', scheduleCountUpdate);
+        documentContent.addEventListener('keyup', scheduleCountUpdate);
+        documentContent.addEventListener('mouseup', scheduleCountUpdate);
+        document.addEventListener('selectionchange', scheduleCountUpdate);
+        documentContent.addEventListener('focus', scheduleCountUpdate);
+
+        // 初始化字数统计显示状态
+        countDisplay.style.display = '';
+        updateWordCountButtonText();
+        updateCountDisplay();
+
+        // 处理 contenteditable 回车键，插入 <br> 而不是 <div>
+        documentContent.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.execCommand('insertLineBreak');
+            }
+        });
+
+        updateCountDisplay();
     </script>
 </body>
 </html>
