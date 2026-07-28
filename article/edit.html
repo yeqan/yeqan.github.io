@@ -452,7 +452,9 @@
         function toggleWordCount() {
             wordCountVisible = !wordCountVisible;
             countDisplay.style.display = wordCountVisible ? '' : 'none';
-            if (wordCountVisible) {
+            if (!wordCountVisible) {
+                countDisplay.textContent = '';
+            } else {
                 updateCountDisplay();
             }
             updateWordCountButtonText();
@@ -468,6 +470,10 @@
         }
 
         function updateCountDisplay() {
+            if (!wordCountVisible) {
+                return;
+            }
+
             const selectionText = window.getSelection ? window.getSelection().toString() : '';
             const totalLength = getTextLength(documentContent.textContent || '');
             const hasSelection = selectionText && selectionText.trim();
@@ -476,13 +482,15 @@
         }
 
         function scheduleCountUpdate() {
-            if (countUpdateFrame !== null) {
+            if (!wordCountVisible || countUpdateFrame !== null) {
                 return;
             }
 
             countUpdateFrame = requestAnimationFrame(() => {
                 countUpdateFrame = null;
-                updateCountDisplay();
+                if (wordCountVisible) {
+                    updateCountDisplay();
+                }
             });
         }
 
