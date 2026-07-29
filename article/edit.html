@@ -540,63 +540,23 @@
         }
 
         async function loadMatchPageNames() {
-            const candidates = [];
-            const host = window.location.hostname || '';
-
-            if (host === 'yeqan.github.io' || host.endsWith('.github.io')) {
-                const repoOwner = 'yeqan';
-                const repoName = 'yeqan.github.io';
-                const branches = ['main', 'master'];
-
-                for (const branch of branches) {
-                    candidates.push(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/article?ref=${branch}`);
+            try {
+                const response = await fetch('./', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error('directory request failed');
                 }
-            }
 
-            candidates.push('./');
+                const html = await response.text();
+                const names = Array.from(html.matchAll(/href=["']([^"'#]+?)(?:\.html)?["']/gi))
+                    .map((match) => match[1])
+                    .filter((value) => value && !value.startsWith('http') && value !== './' && value !== '../')
+                    .map((value) => value.replace(/\/$/, '').replace(/\.html$/i, '').replace(/\.txt$/i, ''))
+                    .filter((value) => value && value !== 'edit');
 
-            for (const url of candidates) {
-                try {
-                    const response = await fetch(url, {
-                        cache: 'no-store',
-                        headers: { Accept: 'application/vnd.github.v3+json' }
-                    });
-
-                    if (!response.ok) {
-                        continue;
-                    }
-
-                    const contentType = response.headers.get('content-type') || '';
-                    let names = [];
-
-                    if (contentType.includes('application/json')) {
-                        const json = await response.json();
-                        names = Array.isArray(json)
-                            ? json
-                                .filter((item) => item && item.type === 'file')
-                                .map((item) => item.name)
-                                .filter((name) => /\.(html|txt|md)$/i.test(name))
-                                .map((name) => name.replace(/\.(html|txt|md)$/i, ''))
-                            : [];
-                    } else {
-                        const html = await response.text();
-                        names = Array.from(html.matchAll(/href=["']([^"'#]+?)(?:\.html)?["']/gi))
-                            .map((match) => match[1])
-                            .filter((value) => value && !value.startsWith('http') && value !== './' && value !== '../')
-                            .map((value) => value.replace(/\/$/, '').replace(/\.html$/i, '').replace(/\.txt$/i, ''));
-                    }
-
-                    names = names.filter((value) => value && value !== 'edit' && value !== 'edit_new');
-                    if (names.length) {
-                        matchPageNames = [...new Set(names)];
-                        break;
-                    }
-                } catch (error) {
-                    continue;
+                if (names.length) {
+                    matchPageNames = [...new Set(names)];
                 }
-            }
-
-            if (!matchPageNames.length) {
+            } catch (error) {
                 matchPageNames = [...fallbackMatchPageNames];
             }
 
