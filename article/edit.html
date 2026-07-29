@@ -274,6 +274,44 @@
             box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
         }
 
+        .match-input-wrap {
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .match-dropdown {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 4px);
+            z-index: 10;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .match-dropdown.show {
+            display: block;
+        }
+
+        .match-option {
+            padding: 9px 12px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .match-option:hover,
+        .match-option.active {
+            background-color: #f5f7ff;
+            color: #165DFF;
+        }
+
         .dialog-checkbox-group {
             margin-bottom: 16px;
             font-size: 12px;
@@ -370,7 +408,10 @@
     <div class="dialog-overlay hidden" id="matchDialog">
         <div class="dialog-box">
             <div class="dialog-title">匹配文件</div>
-            <input type="text" class="dialog-input" id="matchInput" placeholder="输入文件名（不含后缀）">
+            <div class="match-input-wrap">
+                <input type="text" class="dialog-input" id="matchInput" placeholder="输入文件名（不含后缀）" autocomplete="off">
+                <div class="match-dropdown" id="matchDropdown"></div>
+            </div>
             <div class="dialog-buttons">
                 <button class="dialog-btn secondary" id="matchCancelBtn">取消</button>
                 <button class="dialog-btn primary" id="matchConfirmBtn">确定</button>
@@ -432,6 +473,10 @@
         const toolsBtn = document.getElementById('toolsBtn');
         const toolsDialog = document.getElementById('toolsDialog');
         const wordCountToggleBtn = document.getElementById('wordCountToggleBtn');
+        const matchDropdown = document.getElementById('matchDropdown');
+
+        const fallbackMatchPageNames = [];
+        let matchPageNames = [...fallbackMatchPageNames];
 
         // 状态变量
         let currentKey = localStorage.getItem('editorKey') || '';
@@ -494,9 +539,58 @@
             });
         }
 
-        // 打开匹配对话框
+        async function loadMatchPageNames() {
+            try {
+                const response = await fetch('./', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error('directory request failed');
+                }
+
+                const html = await response.text();
+                const names = Array.from(html.matchAll(/href=["']([^"'#]+?)(?:\.html)?["']/gi))
+                    .map((match) => match[1])
+                    .filter((value) => value && !value.startsWith('http') && value !== './' && value !== '../')
+                    .map((value) => value.replace(/\/$/, '').replace(/\.html$/i, '').replace(/\.txt$/i, ''))
+                    .filter((value) => value && value !== 'edit');
+
+                if (names.length) {
+                    matchPageNames = [...new Set(names)];
+                }
+            } catch (error) {
+                matchPageNames = [...fallbackMatchPageNames];
+            }
+
+            renderMatchPageOptions(matchInput.value);
+        }
+
+        function renderMatchPageOptions(keyword = '') {
+            const normalizedKeyword = keyword.trim().toLowerCase();
+            const options = matchPageNames.filter((name) => {
+                if (!normalizedKeyword) {
+                    return true;
+                }
+                return name.toLowerCase().includes(normalizedKeyword);
+            });
+
+            if (!options.length) {
+                matchDropdown.innerHTML = '';
+                matchDropdown.classList.remove('show');
+                return;
+            }
+
+            matchDropdown.innerHTML = options.map((name) => `<div class="match-option" data-value="${name}">${name}</div>`).join('');
+            matchDropdown.classList.add('show');
+        }
+
+        function selectMatchOption(value) {
+            matchInput.value = value;
+            matchDropdown.classList.remove('show');
+            matchInput.focus();
+        }
+
         function openMatchDialog() {
             matchInput.value = '';
+            renderMatchPageOptions();
             matchDialog.classList.remove('hidden');
             matchInput.focus();
         }
@@ -691,6 +785,28 @@
 
         matchCancelBtn.addEventListener('click', closeMatchDialog);
 
+        matchInput.addEventListener('input', (e) => {
+            renderMatchPageOptions(e.target.value);
+        });
+
+        matchInput.addEventListener('focus', () => {
+            renderMatchPageOptions(matchInput.value);
+        });
+
+        matchDropdown.addEventListener('click', (e) => {
+            const option = e.target.closest('.match-option');
+            if (!option) {
+                return;
+            }
+            selectMatchOption(option.dataset.value);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.match-input-wrap')) {
+                matchDropdown.classList.remove('show');
+            }
+        });
+
         // 匹配输入框Enter键确认
         matchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -746,6 +862,7 @@
         countDisplay.style.display = '';
         updateWordCountButtonText();
         updateCountDisplay();
+        loadMatchPageNames();
 
         // 处理 contenteditable 回车键，插入 <br> 而不是 <div>
         documentContent.addEventListener('keydown', (e) => {
