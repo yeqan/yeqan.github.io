@@ -475,8 +475,7 @@
         const wordCountToggleBtn = document.getElementById('wordCountToggleBtn');
         const matchDropdown = document.getElementById('matchDropdown');
 
-        const fallbackMatchPageNames = [];
-        let matchPageNames = [...fallbackMatchPageNames];
+        let matchPageNames = [];
 
         // 状态变量
         let currentKey = localStorage.getItem('editorKey') || '';
@@ -540,26 +539,7 @@
         }
 
         async function loadMatchPageNames() {
-            try {
-                const response = await fetch('./', { cache: 'no-store' });
-                if (!response.ok) {
-                    throw new Error('directory request failed');
-                }
-
-                const html = await response.text();
-                const names = Array.from(html.matchAll(/href=["']([^"'#]+?)(?:\.html)?["']/gi))
-                    .map((match) => match[1])
-                    .filter((value) => value && !value.startsWith('http') && value !== './' && value !== '../')
-                    .map((value) => value.replace(/\/$/, '').replace(/\.html$/i, '').replace(/\.txt$/i, ''))
-                    .filter((value) => value && value !== 'edit');
-
-                if (names.length) {
-                    matchPageNames = [...new Set(names)];
-                }
-            } catch (error) {
-                matchPageNames = [...fallbackMatchPageNames];
-            }
-
+            matchPageNames = ["bdtgh_xhnsmbgl", "cq", "fmz", "fszhbqnytjcxn", "gmlyyzx", "jjdsjgl", "jzlzy", "msnqycf", "qnzy", "qwfr"];
             renderMatchPageOptions(matchInput.value);
         }
 
