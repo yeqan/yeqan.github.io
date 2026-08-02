@@ -482,6 +482,9 @@
         let currentFileName = '';
         let countUpdateFrame = null;
         let wordCountVisible = true;
+        // 字数统计缓存：文本未变化时跳过重算（selectionchange 触发极频繁）
+        let cachedContentText = null;
+        let cachedTotalLength = 0;
 
         function getTextLength(text) {
             return text ? text.replace(/\s/g, '').length : 0;
@@ -537,11 +540,16 @@
                 return;
             }
 
+            const text = documentContent.textContent || '';
+            if (text !== cachedContentText) {
+                cachedContentText = text;
+                cachedTotalLength = getTextLength(text);
+            }
+
             const selectionText = window.getSelection ? window.getSelection().toString() : '';
-            const totalLength = getTextLength(documentContent.textContent || '');
             const hasSelection = selectionText && selectionText.trim();
             const selectedLength = hasSelection ? getTextLength(selectionText) : 0;
-            countDisplay.textContent = `字数: ${totalLength} | 已选: ${selectedLength}`;
+            countDisplay.textContent = `字数: ${cachedTotalLength} | 已选: ${selectedLength}`;
         }
 
         function scheduleCountUpdate() {
@@ -840,7 +848,6 @@
 
         documentContent.addEventListener('input', scheduleCountUpdate);
         documentContent.addEventListener('keyup', scheduleCountUpdate);
-        documentContent.addEventListener('mouseup', scheduleCountUpdate);
         document.addEventListener('selectionchange', scheduleCountUpdate);
         documentContent.addEventListener('focus', scheduleCountUpdate);
 
