@@ -487,6 +487,25 @@
             return text ? text.replace(/\s/g, '').length : 0;
         }
 
+        // 加/解密（DES + 口令派生，与仓库文本保险箱一致）
+        function encryptText(text, key) {
+            return CryptoJS.DES.encrypt(text, key).toString();
+        }
+
+        function decryptText(text, key) {
+            return CryptoJS.DES.decrypt(text, key).toString(CryptoJS.enc.Utf8);
+        }
+
+        // 导出内容：空内容提示并返回 null；有密钥则加密
+        function getExportContent() {
+            const content = documentContent.innerText;
+            if (!content.trim()) {
+                alert('编辑区内容为空！');
+                return null;
+            }
+            return currentKey ? encryptText(content, currentKey) : content;
+        }
+
         function updateWordCountButtonText() {
             const label = wordCountVisible ? '隐藏统计字数' : '显示统计字数';
             const icon = wordCountVisible ? 'fa-eye-slash' : 'fa-eye';
@@ -538,7 +557,7 @@
             });
         }
 
-        async function loadMatchPageNames() {
+        function loadMatchPageNames() {
             matchPageNames = ["bdtgh_xhnsmbgl", "cq", "fmz", "fszhbqnytjcxn", "gmlyyzx", "jh", "jjdsjgl", "jzlzy", "msnqycf", "qnzy", "qwfr"];
             renderMatchPageOptions(matchInput.value);
         }
@@ -630,8 +649,7 @@
                 // 如果有密钥且内容不为空，则解密
                 if (currentKey && content.trim()) {
                     try {
-                        const decrypted = CryptoJS.DES.decrypt(content, currentKey).toString(CryptoJS.enc.Utf8);
-                        documentContent.textContent = decrypted;
+                        documentContent.textContent = decryptText(content, currentKey);
                     } catch (e) {
                         alert('解密失败，请检查密钥是否正确！');
                         console.error('解密错误:', e);
@@ -680,16 +698,10 @@
 
         // 复制功能
         copyBtn.addEventListener('click', async () => {
-            const content = documentContent.innerText;
-            if (!content.trim()) {
-                alert('编辑区内容为空！');
+            const copyContent = getExportContent();
+            if (copyContent === null) {
                 return;
             }
-
-            // 如果有密钥，则加密后复制
-            const copyContent = currentKey
-                ? CryptoJS.DES.encrypt(content, currentKey).toString()
-                : content;
 
             try {
                 await navigator.clipboard.writeText(copyContent);
@@ -708,16 +720,10 @@
 
         // 下载功能
         downloadBtn.addEventListener('click', () => {
-            const content = documentContent.innerText;
-            if (!content.trim()) {
-                alert('编辑区内容为空！');
+            const downloadContent = getExportContent();
+            if (downloadContent === null) {
                 return;
             }
-
-            // 如果有密钥，则加密后下载
-            const downloadContent = currentKey
-                ? CryptoJS.DES.encrypt(content, currentKey).toString()
-                : content;
 
             const blob = new Blob([downloadContent], { type: 'text/plain;charset=utf-8' });
             const a = document.createElement('a');
@@ -851,8 +857,6 @@
                 document.execCommand('insertLineBreak');
             }
         });
-
-        updateCountDisplay();
     </script>
 </body>
 </html>
