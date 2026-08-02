@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDIT</title>
     <script src="../js/crypto-js.min.js"></script>
-    <script src="../js/markdown.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -184,28 +183,6 @@
             background-color: #f9fafb;
             font-weight: bold;
             color: #333;
-        }
-
-        /* 预览模式：按 markdown 渲染，关闭 pre-wrap 以免块级元素间多出空行 */
-        .document-content.preview-mode {
-            white-space: normal;
-        }
-
-        .document-content pre {
-            background-color: #f3f4f6;
-            padding: 12px 16px;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 12px 0;
-            font-family: Consolas, Monaco, monospace;
-            font-size: 13px;
-            color: #333;
-            line-height: 1.5;
-        }
-
-        .document-content.preview-mode img {
-            max-width: 100%;
-            border-radius: 4px;
         }
 
         /* 自定义滚动条 */
@@ -470,10 +447,6 @@
                     <i class="fa fa-bar-chart"></i>
                     <span>隐藏统计字数</span>
                 </button>
-                <button class="action-btn" id="previewToggleBtn" type="button">
-                    <i class="fa fa-eye"></i>
-                    <span>开启预览</span>
-                </button>
             </div>
         </div>
     </div>
@@ -500,7 +473,6 @@
         const toolsBtn = document.getElementById('toolsBtn');
         const toolsDialog = document.getElementById('toolsDialog');
         const wordCountToggleBtn = document.getElementById('wordCountToggleBtn');
-        const previewToggleBtn = document.getElementById('previewToggleBtn');
         const matchDropdown = document.getElementById('matchDropdown');
 
         let matchPageNames = [];
@@ -510,8 +482,6 @@
         let currentFileName = '';
         let countUpdateFrame = null;
         let wordCountVisible = true;
-        let isPreviewMode = false;
-        let sourceMarkdown = '';
 
         function getTextLength(text) {
             return text ? text.replace(/\s/g, '').length : 0;
@@ -541,26 +511,6 @@
 
         function closeToolsDialog() {
             toolsDialog.classList.add('hidden');
-        }
-
-        // ---- 预览 / 编辑 切换（Markdown 解析见 ../js/markdown.js）----
-        function setPreviewMode(on) {
-            if (on) {
-                sourceMarkdown = documentContent.textContent;
-                documentContent.innerHTML = parseMarkdown(sourceMarkdown);
-                documentContent.setAttribute('contenteditable', 'false');
-                documentContent.classList.add('preview-mode');
-                previewToggleBtn.querySelector('span').textContent = '开启编辑';
-                previewToggleBtn.querySelector('i').className = 'fa fa-edit';
-            } else {
-                documentContent.textContent = sourceMarkdown;
-                documentContent.setAttribute('contenteditable', 'plaintext-only');
-                documentContent.classList.remove('preview-mode');
-                previewToggleBtn.querySelector('span').textContent = '开启预览';
-                previewToggleBtn.querySelector('i').className = 'fa fa-eye';
-                updateCountDisplay();
-            }
-            isPreviewMode = on;
         }
 
         function updateCountDisplay() {
@@ -790,12 +740,6 @@
         // 字数统计开关按钮
         wordCountToggleBtn.addEventListener('click', () => {
             toggleWordCount();
-            closeToolsDialog();
-        });
-
-        // 预览 / 编辑 切换按钮
-        previewToggleBtn.addEventListener('click', () => {
-            setPreviewMode(!isPreviewMode);
             closeToolsDialog();
         });
 
